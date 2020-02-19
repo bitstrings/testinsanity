@@ -1,0 +1,77 @@
+<idea-plugin>
+    <id>org.bitstrings.idea.plugins.TestInsanity</id>
+    <name>TestInsanity</name>
+    <version>1.2.0beta13</version>
+    <vendor email="pino.silvaggio@gmail.com" url="https://github.com/bitstrings/testinsanity">bitstrings.org</vendor>
+
+    <description><![CDATA[
+      Automatic renaming of tests methods and classes.<br/>
+      <br/>
+      <ul>
+        <li>Pattern based renaming</>
+        <li>Test annotation aware</li>
+        <li>Gutter annotation icon</li>
+        <li>Test subject navigation (default shortcut: CTRL+ALT+`)</li>
+        <li>Per Project settings</li>
+        <li>Kotlin Support (experimental)</li>
+      </ul>
+      <br/>
+      Please report issues:<br/>
+      <a href="https://github.com/bitstrings/testinsanity/issues">https://github.com/bitstrings/testinsanity/issues</a><br/>
+      <br/>
+      <font size=-1><b>Pino Silvaggio</b></font>
+    ]]></description>
+
+    <change-notes><![CDATA[
+      <b>v1.2.0beta13</b><br/>
+      First public release.
+    ]]>
+    </change-notes>
+
+    <idea-version since-build="192"/>
+
+    <depends>com.intellij.modules.java</depends>
+    <depends>org.jetbrains.kotlin</depends>
+
+    <resource-bundle>messages.TestInsanityBundle</resource-bundle>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <projectService
+            serviceImplementation="org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings"
+            id="testinsanity.settings.project"/>
+        <projectService
+            serviceImplementation="org.bitstrings.idea.plugins.testinsanity.RenameTestService"
+            id="testinsanity.renameTestService"
+            order="last, after testinsanity.settings.project"/>
+        <projectConfigurable
+            groupId="tools" groupWeight="100" order="last"
+            instance="org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfig"
+            id="testinsanity.settings"
+            key="testinsanity.settings.name"
+            bundle="messages.TestInsanityBundle"
+            nonDefaultProject="false"/>
+        <renamePsiElementProcessor implementation="org.bitstrings.idea.plugins.testinsanity.RenameTestMethodProcessor"
+                                   order="first, before javamethod, after KotlinFunction, before KotlinAwareJavaGetter"/>
+        <renamePsiElementProcessor implementation="org.bitstrings.idea.plugins.testinsanity.RenameTestClassProcessor"
+                                   order="first"/>
+        <annotator language="JVM" implementationClass="org.bitstrings.idea.plugins.testinsanity.annotators.TestAnnotator"/>
+<!--        <codeInsight.parameterInfo language="JAVA" implementationClass="org.bitstrings.idea.plugins.testinsanity.codeinsight.TestInlayProvider"/>-->
+    </extensions>
+
+    <actions>
+        <action id="org.bitstrings.idea.plugins.testinsanity.actions.JumpToSiblingAction"
+                class="org.bitstrings.idea.plugins.testinsanity.actions.JumpToSiblingAction"
+                text="_Jump to sibling"
+                description="Jump to its sibling">
+            <add-to-group group-id="GoToCodeGroup" anchor="after" relative-to-action="GotoTest"/>
+            <add-to-group group-id="EditorPopupMenu.GoTo" anchor="after" relative-to-action="GotoTest"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="control alt BACK_QUOTE"/>
+        </action>
+        <action id="org.bitstrings.idea.plugins.testinsanity.actions.TestInsanityEnablerAction"
+                class="org.bitstrings.idea.plugins.testinsanity.actions.TestInsanityEnablerAction"
+                text="TestInsanity Refactoring Support">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+
+</idea-plugin>
