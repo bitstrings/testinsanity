@@ -7,9 +7,9 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="16"
-   height="16"
-   viewBox="0 0 16 16"
+   width="12"
+   height="12"
+   viewBox="0 0 12 12"
    version="1.1"
    id="svg1593"
    sodipodi:docname="gutter_icon.svg"
@@ -42,7 +42,7 @@
      id="namedview1595"
      showgrid="true"
      inkscape:zoom="64.00000006753717"
-     inkscape:cx="8.388799529101849"
+     inkscape:cx="3.146612034633762"
      inkscape:cy="6.936580442775325"
      inkscape:window-x="0"
      inkscape:window-y="32"
@@ -61,7 +61,7 @@
   </sodipodi:namedview>
   <g
      id="g1173"
-     transform="matrix(2.285714285714289,0,0,2.285714285714289,-37.71428734915606,-3.428571973528179)"
+     transform="matrix(2.285714285714289,0,0,2.285714285714289,-39.71428734915604,-5.428571973528211)"
      style="fill:#008000">
     <path
        style="opacity:1;fill:#008000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.1777416766;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.0288461723;paint-order:normal"

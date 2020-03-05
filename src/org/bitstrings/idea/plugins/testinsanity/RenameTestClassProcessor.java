@@ -12,8 +12,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
-import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.refactoring.rename.RenameJavaClassProcessor;
 import com.intellij.usageView.UsageInfo;
@@ -25,17 +23,13 @@ public class RenameTestClassProcessor
     @Override
     public boolean canProcessElement(PsiElement element)
     {
-        boolean canProcessElement = ((element instanceof PsiClass) || (element instanceof KtClass));
-
         Project project = element.getProject();
 
         RenameTestService renameTestService = RenameTestService.getInstance(project);
 
         GlobalSearchScope searchScope = renameTestService.getSearchScope(element, ProjectFilesScope.INSTANCE);
 
-        GlobalSearchScope testSearchScope = searchScope.intersectWith(GlobalSearchScopes.projectTestScope(project));
-
-        return (canProcessElement && PsiSearchScopeUtil.isInScope(testSearchScope, element)
+        return (((element instanceof PsiClass) || (element instanceof KtClass))
             && TestInsanitySettings.getInstance(project).isRefactoringEnabled());
     }
 

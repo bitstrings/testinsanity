@@ -1,23 +1,25 @@
 package org.bitstrings.idea.plugins.testinsanity;
 
+import static org.bitstrings.idea.plugins.testinsanity.util.KotlinJavaUtil.getLightClassMethod;
+
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
-import org.jetbrains.kotlin.asJava.LightClassUtil;
 import org.jetbrains.kotlin.psi.KtFunction;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.search.scope.ProjectFilesScope;
+import com.intellij.refactoring.rename.AutomaticRenamingDialog;
 import com.intellij.refactoring.rename.RenameJavaMethodProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
@@ -28,7 +30,12 @@ public class RenameTestMethodProcessor
     @Override
     public boolean canProcessElement(PsiElement element)
     {
+        Project project = element.getProject();
+
+        GlobalSearchScope testSearchScope = GlobalSearchScopes.projectTestScope(project);
+
         return (((element instanceof PsiMethod) || (element instanceof KtFunction))
+            && !PsiSearchScopeUtil.isInScope(testSearchScope, element)
             && TestInsanitySettings.getInstance(element.getProject()).isRefactoringEnabled());
     }
 
@@ -37,43 +44,63 @@ public class RenameTestMethodProcessor
         PsiElement element, String newName, Map<PsiElement, String> allRenames, SearchScope scope
     )
     {
-        if (StringUtils.isEmpty(newName))
-        {
-            return;
-        }
-
         if (element instanceof KtNamedFunction)
         {
-            element = LightClassUtil.INSTANCE.getLightClassMethod((KtNamedFunction) element);
+            element = getLightClassMethod((KtNamedFunction) element);
         }
+
+        super.prepareRenaming(element, newName, allRenames, scope);
 
         Project project = element.getProject();
 
         RenameTestService renameTestService = RenameTestService.getInstance(project);
 
-        PsiClass elementClass = (PsiClass) element.getParent();
+        Map<PsiElement, String> newRenames = new HashMap<>();
 
-        GlobalSearchScope searchScope = renameTestService.getSearchScope(element, ProjectFilesScope.INSTANCE);
+        allRenames.forEach(
+            (rename, renameNewName) ->
+            {
+                if (rename instanceof KtNamedFunction)
+                {
+                    rename = getLightClassMethod((KtNamedFunction) rename);
+                }
 
-        GlobalSearchScope testSearchScope = searchScope.intersectWith(GlobalSearchScopes.projectTestScope(project));
+                newRenames.putAll(
+                    renameTestService
+                        .renameSubjectMethodMapping(
+                            (PsiMethod) rename,
+                            renameNewName, GlobalSearchScope.projectScope(project)));
+            }
+        );
 
-        if (PsiSearchScopeUtil.isInScope(testSearchScope, element))
+        if (!newRenames.isEmpty() && TestInsanitySettings.getInstance(project).isRenamingDialogEnabled())
         {
-            allRenames.putAll(
-                renameTestService.renameTestMethodMapping((PsiMethod) element, newName, searchScope)
+            AutomaticTestRenamer renamer = new AutomaticTestRenamer();
+            newRenames.forEach(
+                (rename, renameNewName) -> renamer.addElement((PsiNamedElement) rename, renameNewName)
+            );
+
+            newRenames.clear();
+
+            AppUIExecutor.onUiThread().inSmartMode(project).execute(
+                () ->
+                {
+                    AutomaticRenamingDialog dialog = new AutomaticRenamingDialog(project, renamer);
+                    if (dialog.showAndGet())
+                    {
+                        newRenames.putAll(renamer.getRenames());
+                    }
+                }
             );
         }
-        else if (
-            !renameTestService
-                .getTestClassSiblingMediator()
-                .getTestClasses(elementClass, searchScope)
-                .isEmpty()
-        )
-        {
-            allRenames.putAll(
-                renameTestService.renameSubjectMethodMapping((PsiMethod) element, newName, searchScope)
-            );
-        }
+
+        newRenames.forEach(
+            (rename, renameNewName) ->
+            {
+                super.prepareRenaming(rename, renameNewName, allRenames, scope);
+                allRenames.put(rename, renameNewName);
+            }
+        );
     }
 
     @Override
@@ -81,15 +108,9 @@ public class RenameTestMethodProcessor
         PsiElement element, String newName, MultiMap<PsiElement, String> conflicts, Map<PsiElement, String> allRenames
     )
     {
+        super.findExistingNameConflicts(element, newName, conflicts, allRenames);
         allRenames.forEach(
-            (renameElement, renameNewName) ->
-            {
-                if (renameElement instanceof PsiMethod)
-                {
-                    super.findExistingNameConflicts(renameElement, renameNewName, conflicts, allRenames);
-                }
-            }
-        );
+            (rename, renameNewName) -> super.findExistingNameConflicts(rename, renameNewName, conflicts, allRenames));
     }
 
     @Override
@@ -97,14 +118,7 @@ public class RenameTestMethodProcessor
         PsiElement element, String newName, Map<? extends PsiElement, String> allRenames, List<UsageInfo> result
     )
     {
-        allRenames.forEach(
-            (renameElement, renameNewName) ->
-            {
-                if (renameElement instanceof PsiMethod)
-                {
-                    super.findCollisions(renameElement, renameNewName, allRenames, result);
-                }
-            }
-        );
+        super.findCollisions(element, newName, allRenames, result);
+        allRenames.forEach((rename, renameNewName) -> super.findCollisions(rename, renameNewName, allRenames, result));
     }
 }

@@ -200,9 +200,9 @@ public final class TestPatternMatcher
     {
         Matcher matcher = prefixValueRegex.matcher(test);
 
-        if (!matcher.find())
+        if (!matcher.matches())
         {
-            return TestPatternMatchResult.INVALID;
+            return TestPatternMatchResult.UNMATCHED;
         }
 
         String prefixValue = matcher.group("prefix");
@@ -222,16 +222,17 @@ public final class TestPatternMatcher
 
         for (String candidate : subjectCandidates)
         {
-            suffixValue = StringUtils.removeStart(restValue, candidate);
-            if ((suffixValue.length() < restValue.length()) && (candidate.length() > foundValue.length()))
+            String candidateSuffixValue = StringUtils.removeStart(restValue, candidate);
+            if ((candidateSuffixValue.length() < restValue.length()) && (candidate.length() > foundValue.length()))
             {
                 foundValue = candidate;
+                suffixValue = candidateSuffixValue;
             }
         }
 
-        if (!suffixValueRegex.matcher(suffixValue).matches())
+        if (!suffixValueRegex.matcher(suffixValue).matches() || foundValue.isEmpty())
         {
-            return TestPatternMatchResult.INVALID;
+            return TestPatternMatchResult.UNMATCHED;
         }
 
         return new TestPatternMatchResult(prefixValue, foundValue, suffixValue);

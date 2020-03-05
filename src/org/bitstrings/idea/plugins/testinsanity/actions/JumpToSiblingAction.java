@@ -2,12 +2,12 @@ package org.bitstrings.idea.plugins.testinsanity.actions;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static org.bitstrings.idea.plugins.testinsanity.util.KotlinJavaUtil.getLightClassMethod;
 
 import java.util.List;
 
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
-import org.jetbrains.kotlin.asJava.LightClassUtil;
 import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 
@@ -65,7 +65,7 @@ public class JumpToSiblingAction
 
             PsiMethod elementMethod =
                 elementParent instanceof KtNamedFunction
-                    ? LightClassUtil.INSTANCE.getLightClassMethod((KtNamedFunction) elementParent)
+                    ? getLightClassMethod((KtNamedFunction) elementParent)
                     : (PsiMethod) elementParent;
 
             PsiClass elementClass;
@@ -87,7 +87,7 @@ public class JumpToSiblingAction
             }
             else
             {
-                elementClass = (PsiClass) elementMethod.getParent();
+                elementClass = elementMethod.getContainingClass();
             }
 
             if (elementClass == null)

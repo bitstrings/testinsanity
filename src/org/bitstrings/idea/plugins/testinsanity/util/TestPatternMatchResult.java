@@ -1,10 +1,11 @@
 package org.bitstrings.idea.plugins.testinsanity.util;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public final class TestPatternMatchResult
 {
-    public static final TestPatternMatchResult INVALID = new TestPatternMatchResult("", "", "");
+    public static final TestPatternMatchResult UNMATCHED = new TestPatternMatchResult("", "", "");
 
     private final String prefix;
 
@@ -41,5 +42,16 @@ public final class TestPatternMatchResult
     public boolean isMatched()
     {
         return matched;
+    }
+
+    @Override
+    public String toString()
+    {
+        return new ToStringBuilder(this)
+            .append("prefix", prefix)
+            .append("subject", subject)
+            .append("suffix", suffix)
+            .append("matched", matched)
+            .toString();
     }
 }

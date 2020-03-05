@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>org.bitstrings.idea.plugins.TestInsanity</id>
     <name>TestInsanity</name>
-    <version>1.2.0beta13</version>
+    <version>1.3.0</version>
     <vendor email="pino.silvaggio@gmail.com" url="https://github.com/bitstrings/testinsanity">bitstrings.org</vendor>
 
     <description><![CDATA[
@@ -13,7 +13,7 @@
         <li>Gutter annotation icon</li>
         <li>Test subject navigation (default shortcut: CTRL+ALT+`)</li>
         <li>Per Project settings</li>
-        <li>Kotlin Support (experimental)</li>
+        <li>Kotlin Support</li>
       </ul>
       <br/>
       Please report issues:<br/>
@@ -23,15 +23,15 @@
     ]]></description>
 
     <change-notes><![CDATA[
-      <b>v1.2.0beta13</b><br/>
+      <b>v1.3.0</b><br/>
       First public release.
     ]]>
     </change-notes>
 
     <idea-version since-build="192"/>
 
-    <depends>com.intellij.modules.java</depends>
     <depends>org.jetbrains.kotlin</depends>
+    <depends>com.intellij.modules.java</depends>
 
     <resource-bundle>messages.TestInsanityBundle</resource-bundle>
 
@@ -52,10 +52,9 @@
             nonDefaultProject="false"/>
         <renamePsiElementProcessor implementation="org.bitstrings.idea.plugins.testinsanity.RenameTestMethodProcessor"
                                    order="first, before javamethod, after KotlinFunction, before KotlinAwareJavaGetter"/>
-        <renamePsiElementProcessor implementation="org.bitstrings.idea.plugins.testinsanity.RenameTestClassProcessor"
-                                   order="first"/>
+<!--        <renamePsiElementProcessor implementation="org.bitstrings.idea.plugins.testinsanity.RenameTestClassProcessor"-->
+<!--                                   order="first"/>-->
         <annotator language="JVM" implementationClass="org.bitstrings.idea.plugins.testinsanity.annotators.TestAnnotator"/>
-<!--        <codeInsight.parameterInfo language="JAVA" implementationClass="org.bitstrings.idea.plugins.testinsanity.codeinsight.TestInlayProvider"/>-->
     </extensions>
 
     <actions>

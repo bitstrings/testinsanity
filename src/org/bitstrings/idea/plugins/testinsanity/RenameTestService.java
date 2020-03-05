@@ -10,6 +10,7 @@ import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher.CapitalizationScheme;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
@@ -123,7 +124,7 @@ public class RenameTestService
     {
         String oldSubjectName = subjectMethod.getName();
 
-        PsiClass subjectClass = ((PsiClass) subjectMethod.getParent());
+        PsiClass subjectClass = subjectMethod.getContainingClass();
 
         Map<PsiMethod, String> renames = new LinkedHashMap<>();
 
@@ -138,10 +139,10 @@ public class RenameTestService
                         )
                 );
 
-        if (!Objects.equals(oldSubjectName, newSubjectName))
-        {
-            renames.put(subjectMethod, newSubjectName);
-        }
+//        if (!Objects.equals(oldSubjectName, newSubjectName))
+//        {
+//            renames.put(subjectMethod, newSubjectName);
+//        }
 
         for (PsiMethod testMethod : testMethods)
         {
@@ -163,7 +164,7 @@ public class RenameTestService
     {
         String oldTestName = testMethod.getName();
 
-        PsiClass testClass = ((PsiClass) testMethod.getParent());
+        PsiClass testClass = testMethod.getContainingClass();
 
         Map<PsiMethod, String> renames = new LinkedHashMap<>();
 
@@ -243,6 +244,13 @@ public class RenameTestService
 
     public GlobalSearchScope getSearchScope(PsiElement element, NamedScope scope)
     {
-        return GlobalSearchScope.moduleWithDependentsScope(ModuleUtilCore.findModuleForPsiElement(element));
+        Module module = ModuleUtilCore.findModuleForPsiElement(element);
+
+        if (module == null)
+        {
+            return GlobalSearchScope.EMPTY_SCOPE;
+        }
+
+        return GlobalSearchScope.moduleWithDependentsScope(module);
     }
 }

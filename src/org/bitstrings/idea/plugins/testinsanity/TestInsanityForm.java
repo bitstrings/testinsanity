@@ -41,7 +41,8 @@ public class TestInsanityForm
     private JCheckBox enableRefactoringSupportCheckBox;
     private JCheckBox enableNavigationCheckBox;
     private JTextPane itIsRecommendedToTextPane;
-    private JCheckBox enableGutterAnnotationCheckBox;
+    private JCheckBox showGutterAnnotationCheckBox;
+    private JCheckBox showRenamingDialogCheckBox;
 
     private final ArrayList<String> presetPreviewPaneTexts = new ArrayList<>();
 
@@ -64,7 +65,8 @@ public class TestInsanityForm
             .setSelected(settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.UNCHANGED);
         enableRefactoringSupportCheckBox.setSelected(settings.isRefactoringEnabled());
         enableNavigationCheckBox.setSelected(settings.isNavigationEnabled());
-        enableGutterAnnotationCheckBox.setSelected(settings.isGutterAnnotationEnabled());
+        showRenamingDialogCheckBox.setSelected(settings.isRenamingDialogEnabled());
+        showGutterAnnotationCheckBox.setSelected(settings.isGutterAnnotationEnabled());
 
         testMethodPresetCombo.removeAllItems();
 
@@ -150,7 +152,8 @@ public class TestInsanityForm
 
         settings.setRefactoringEnabled(enableRefactoringSupportCheckBox.isSelected());
         settings.setNavigationEnabled(enableNavigationCheckBox.isSelected());
-        settings.setGutterAnnotationEnabled(enableGutterAnnotationCheckBox.isSelected());
+        settings.setRenamingDialogEnabled(showRenamingDialogCheckBox.isSelected());
+        settings.setGutterAnnotationEnabled(showGutterAnnotationCheckBox.isSelected());
     }
 
     public boolean isModified()
@@ -168,6 +171,7 @@ public class TestInsanityForm
             || (testAnnotationTestNgCheckBox.isSelected() != settings.hasTestAnnotation(TestAnnotation.TESTNG))
             || (enableRefactoringSupportCheckBox.isSelected() != settings.isRefactoringEnabled())
             || (enableNavigationCheckBox.isSelected() != settings.isNavigationEnabled())
-            || (enableGutterAnnotationCheckBox.isSelected() != settings.isGutterAnnotationEnabled());
+            || (showRenamingDialogCheckBox.isSelected() != settings.isNavigationEnabled())
+            || (showGutterAnnotationCheckBox.isSelected() != settings.isGutterAnnotationEnabled());
     }
 }

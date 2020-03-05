@@ -1,5 +1,10 @@
 package org.bitstrings.idea.plugins.testinsanity.annotators;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static org.bitstrings.idea.plugins.testinsanity.util.KotlinJavaUtil.getLightClassMethod;
+
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.Icon;
@@ -7,7 +12,7 @@ import javax.swing.Icon;
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.actions.JumpToSiblingAction;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
-import org.jetbrains.kotlin.asJava.LightClassUtil;
+import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 
 import com.intellij.lang.annotation.Annotation;
@@ -17,19 +22,25 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.presentation.java.ClassPresentationUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 
 public class TestAnnotator
     implements Annotator
 {
-    private static final Icon ICON = IconLoader.getIcon("/icons/gutter_icon.svg");
-    private static final Icon ICON_ORPHAN = IconLoader.getIcon("/icons/gutter_orphan_icon.svg");
+    private static final Icon GUTTER_CLASS_ICON = IconLoader.getIcon("/icons/gutter_class_icon.svg");
+    private static final Icon GUTTER_CLASS_ORPHAN_ICON = IconLoader.getIcon("/icons/gutter_class_orphan_icon.svg");
+    private static final Icon GUTTER_METHOD_ICON = IconLoader.getIcon("/icons/gutter_icon.svg");
+    private static final Icon GUTTER_METHOD_ORPHAN_ICON = IconLoader.getIcon("/icons/gutter_orphan_icon.svg");
 
-    private static final String NOT_LINKED_TO_SUBJECT_MESSAGE = "Test not Linked to Subject";
-    private static final String NO_SUBJECT_CLASS_MESSAGE = "No Test Subject Class";
+    private static final String NOT_LINKED_TO_SUBJECT_MESSAGE = "Missing Test Subject Method";
+    private static final String NO_SUBJECT_CLASS_MESSAGE = "Missing Test Subject Class";
 
     private static class TestMatchGutterIconRenderer
         extends GutterIconRenderer
@@ -56,13 +67,13 @@ public class TestAnnotator
         @Override
         public AnAction getClickAction()
         {
-            return new JumpToSiblingAction(element);
+            return (element == null ? null : new JumpToSiblingAction(element));
         }
 
         @Override
-        public boolean equals(Object o)
+        public boolean equals(Object object)
         {
-            return (o instanceof TestMatchGutterIconRenderer);
+            return (object instanceof TestMatchGutterIconRenderer);
         }
 
         @Override
@@ -89,76 +100,195 @@ public class TestAnnotator
         }
 
         RenameTestService renameTestService = RenameTestService.getInstance(project);
+        GlobalSearchScope searchScope = renameTestService.getSearchScope(element, ProjectFilesScope.INSTANCE);
 
         if (element instanceof KtNamedFunction)
         {
-            element = LightClassUtil.INSTANCE.getLightClassMethod((KtNamedFunction) element);
+            element = getLightClassMethod((KtNamedFunction) element);
+        }
+        else if (element instanceof KtClass)
+        {
+            element = JavaPsiFacade
+                .getInstance(project)
+                .findClass(((KtClass) element).getFqName().asString(), searchScope);
         }
 
-        if (
-            !(element instanceof PsiMethod)
-                || !renameTestService.getTestMethodSiblingMediator().checkMethodAnnotation((PsiMethod) element, true)
-        )
+        if (element instanceof PsiClass)
         {
+            PsiClass elementClass = (PsiClass) element;
+
+            if (renameTestService.getTestClassSiblingMediator().isTestClassName(elementClass.getName()))
+            {
+                PsiClass subjectClass =
+                    renameTestService
+                        .getTestClassSiblingMediator()
+                        .getSubjectClass(
+                            elementClass, searchScope);
+
+                annotateTestClass(subjectClass, elementClass, annotationHolder);
+            }
+            else
+            {
+                List<PsiClass> testClasses =
+                    renameTestService
+                        .getTestClassSiblingMediator()
+                        .getTestClasses(
+                            elementClass, searchScope);
+
+                annotateSubjectClass(elementClass, testClasses, annotationHolder);
+            }
+
             return;
         }
 
-        annotateTestMethod((PsiMethod) element, renameTestService, annotationHolder);
+        if (element instanceof PsiMethod)
+        {
+            PsiClass elementClass = ((PsiMethod) element).getContainingClass();
+
+            if (renameTestService.getTestClassSiblingMediator().isTestClassName(elementClass.getName()))
+            {
+                PsiClass subjectClass =
+                    renameTestService
+                        .getTestClassSiblingMediator()
+                        .getSubjectClass(elementClass, searchScope);
+
+                List<PsiMethod> subjectMethods =
+                    subjectClass == null
+                        ? emptyList()
+                        : renameTestService.getTestMethodSiblingMediator()
+                            .getSubjectMethods((PsiMethod) element, subjectClass);
+
+                annotateTestMethod(
+                    (PsiMethod) element,
+                    (subjectClass == null ? Collections.emptyList() : singletonList(subjectClass)), subjectMethods,
+                    "Subject", false,
+                    renameTestService, annotationHolder
+                );
+            }
+            else
+            {
+                List<PsiClass> testClasses =
+                    renameTestService
+                        .getTestClassSiblingMediator()
+                        .getTestClasses(elementClass, searchScope);
+
+                List<PsiMethod> testMethods =
+                    renameTestService.getTestMethodSiblingMediator()
+                        .getTestMethods((PsiMethod) element, testClasses);
+
+                annotateTestMethod(
+                    (PsiMethod) element, testClasses, testMethods,
+                    "Test", true,
+                    renameTestService, annotationHolder
+                );
+            }
+        }
     }
 
-    protected void annotateTestMethod(
-        PsiMethod testMethod, RenameTestService renameTestService, AnnotationHolder annotationHolder
+    protected void annotateSubjectClass(
+        PsiClass subjectClass, List<PsiClass> testClasses, AnnotationHolder annotationHolder
     )
     {
-        PsiClass testClass = (PsiClass) testMethod.getParent();
-
-        if (testClass == null)
+        if (testClasses.isEmpty())
         {
             return;
         }
 
-        PsiClass subjectClass =
-            renameTestService
-                .getTestClassSiblingMediator()
-                .getSubjectClass(testClass, renameTestService.getSearchScope(testMethod, ProjectFilesScope.INSTANCE));
+        String message = "Found " + testClasses.size() + " Test Class(es)";
+        String tooltip = "Found <b>" + testClasses.size() + "</b> Test Class(es)";
+        GutterIconRenderer iconRenderer = new TestMatchGutterIconRenderer(GUTTER_CLASS_ICON, subjectClass, tooltip);
 
+        createAnnotation(annotationHolder, subjectClass, message, iconRenderer);
+    }
+
+    protected void annotateTestClass(
+        PsiClass subjectClass, PsiClass testClass, AnnotationHolder annotationHolder
+    )
+    {
         String message;
         String tooltip;
         GutterIconRenderer iconRenderer;
 
         if (subjectClass != null)
         {
-            List<PsiMethod> subjectMethods =
-                renameTestService.getTestMethodSiblingMediator().getSubjectMethods(testMethod, subjectClass);
+            String subjectClassPres = ClassPresentationUtil.getNameForClass(subjectClass, true);
 
-            if (subjectMethods.isEmpty())
-            {
-                message = NOT_LINKED_TO_SUBJECT_MESSAGE;
-                tooltip = message;
-                iconRenderer = new TestMatchGutterIconRenderer(ICON_ORPHAN, testMethod, NOT_LINKED_TO_SUBJECT_MESSAGE);
-            }
-            else
-            {
-                message =
-                    "Linked to Subject: " + subjectClass.getName() + "." + subjectMethods.get(0).getName()
-                        + " [" + subjectMethods.size() + " Found]";
-
-               tooltip =
-                    "Linked to Subject: <b>" + subjectClass.getName() + "." + subjectMethods.get(0).getName() + "</b>"
-                        + " [" + subjectMethods.size() + " Found]";
-
-                iconRenderer = new TestMatchGutterIconRenderer(ICON, testMethod, tooltip);
-            }
+            message = "Subject Class [ " + subjectClassPres + " ]";
+            tooltip = "Subject Class [ <a href=\"#javaClass/" + subjectClassPres + "\">" + subjectClassPres + "</a> ]";
+            iconRenderer = new TestMatchGutterIconRenderer(GUTTER_CLASS_ICON, testClass, tooltip);
         }
         else
         {
             message = NO_SUBJECT_CLASS_MESSAGE;
-            tooltip = message;
-            iconRenderer = new TestMatchGutterIconRenderer(ICON_ORPHAN, testMethod, NO_SUBJECT_CLASS_MESSAGE);
+            iconRenderer = new TestMatchGutterIconRenderer(
+                GUTTER_CLASS_ORPHAN_ICON, testClass, NOT_LINKED_TO_SUBJECT_MESSAGE);
         }
 
-        Annotation annotation = annotationHolder.createInfoAnnotation(testMethod, message);
-        annotation.setTooltip(tooltip);
+        createAnnotation(annotationHolder, testClass, message, iconRenderer);
+    }
+
+    protected void annotateTestMethod(
+        PsiMethod method, List<PsiClass> siblingClasses, List<PsiMethod> siblingMethods,
+        String foundMessageIdentifier, boolean ignoreMissing,
+        RenameTestService renameTestService, AnnotationHolder annotationHolder
+    )
+    {
+        String message;
+        String tooltip;
+        GutterIconRenderer iconRenderer;
+
+        if (!siblingClasses.isEmpty())
+        {
+            if (siblingMethods.isEmpty())
+            {
+                if (ignoreMissing)
+                {
+                    return;
+                }
+
+                message = NOT_LINKED_TO_SUBJECT_MESSAGE;
+                iconRenderer = new TestMatchGutterIconRenderer(
+                    GUTTER_METHOD_ORPHAN_ICON, method, NOT_LINKED_TO_SUBJECT_MESSAGE);
+            }
+            else
+            {
+                String siblingMethodClassPres = ClassPresentationUtil.getContextName(siblingMethods.get(0), true);
+                String siblingtMethodNamePres = siblingMethods.get(0).getName();
+                String siblingMethodPres = siblingMethodClassPres + "." + siblingtMethodNamePres;
+
+                message =
+                    foundMessageIdentifier
+                        + " Name [ " + siblingMethodPres + " ] (" + siblingMethods.size() + " Found)";
+                tooltip =
+                    foundMessageIdentifier
+                        + " Name [ <a href=\"#javaClass/" + siblingMethodClassPres + "\">"
+                        + siblingMethodPres
+                        + "</a> ]"
+                        + " (" + siblingMethods.size() + " Found)";
+
+                iconRenderer = new TestMatchGutterIconRenderer(GUTTER_METHOD_ICON, method, tooltip);
+            }
+        }
+        else
+        {
+            if (ignoreMissing)
+            {
+                return;
+            }
+
+            message = NO_SUBJECT_CLASS_MESSAGE;
+            iconRenderer =
+                new TestMatchGutterIconRenderer(GUTTER_METHOD_ORPHAN_ICON, method, NO_SUBJECT_CLASS_MESSAGE);
+        }
+
+        createAnnotation(annotationHolder, method, message, iconRenderer);
+    }
+
+    protected void createAnnotation(
+        AnnotationHolder annotationHolder, PsiNamedElement namedElement, String message, GutterIconRenderer iconRenderer
+    )
+    {
+        Annotation annotation = annotationHolder.createInfoAnnotation(namedElement, message);
         annotation.setGutterIconRenderer(iconRenderer);
         annotation.setNeedsUpdateOnTyping(true);
     }

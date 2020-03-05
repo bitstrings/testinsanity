@@ -55,6 +55,8 @@ public class TestInsanitySettings
 
     public boolean navigationEnabled;
 
+    public boolean renamingDialogEnabled;
+
     public boolean gutterAnnotationEnabled;
 
     public TestInsanitySettings()
@@ -67,6 +69,7 @@ public class TestInsanitySettings
         setTestMethodNameCapitalizationScheme(CapitalizationScheme.IF_PREFIXED);
         setRefactoringEnabled(true);
         setNavigationEnabled(true);
+        setRenamingDialogEnabled(true);
         setGutterAnnotationEnabled(true);
     }
 
@@ -165,6 +168,16 @@ public class TestInsanitySettings
     public boolean isNavigationEnabled()
     {
         return navigationEnabled;
+    }
+
+    public void setRenamingDialogEnabled(boolean renamingDialogEnabled)
+    {
+        this.renamingDialogEnabled = renamingDialogEnabled;
+    }
+
+    public boolean isRenamingDialogEnabled()
+    {
+        return renamingDialogEnabled;
     }
 
     public void setGutterAnnotationEnabled(boolean gutterAnnotationEnabled)

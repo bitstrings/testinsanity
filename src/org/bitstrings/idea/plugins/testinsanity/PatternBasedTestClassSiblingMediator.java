@@ -52,6 +52,11 @@ public class PatternBasedTestClassSiblingMediator
         return testClassNamePattern;
     }
 
+    public TestPatternMatcher getTestClassPatternMatcher()
+    {
+        return testClassPatternMatcher;
+    }
+
     @Override
     public void validatePattern()
         throws TestPatternException

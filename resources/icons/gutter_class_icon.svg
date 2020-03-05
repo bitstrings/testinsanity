@@ -12,7 +12,7 @@
    viewBox="0 0 12 12"
    version="1.1"
    id="svg1593"
-   sodipodi:docname="gutter_orphan_icon.svg"
+   sodipodi:docname="gutter_class_icon.svg"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)">
   <metadata
      id="metadata1599">
@@ -41,9 +41,9 @@
      inkscape:window-height="2098"
      id="namedview1595"
      showgrid="true"
-     inkscape:zoom="41.32155255829296"
-     inkscape:cx="-17.50851635930949"
-     inkscape:cy="9.684461449572485"
+     inkscape:zoom="63.99999976361902"
+     inkscape:cx="2.904604313066958"
+     inkscape:cy="6.497246216192968"
      inkscape:window-x="0"
      inkscape:window-y="32"
      inkscape:window-maximized="1"
@@ -51,7 +51,7 @@
      inkscape:snap-bbox="true"
      inkscape:bbox-paths="true"
      inkscape:bbox-nodes="true"
-     inkscape:snap-bbox-edge-midpoints="true"
+     inkscape:snap-bbox-edge-midpoints="false"
      inkscape:snap-bbox-midpoints="false"
      inkscape:snap-object-midpoints="false"
      inkscape:snap-center="false">
@@ -59,14 +59,8 @@
        type="xygrid"
        id="grid1756" />
   </sodipodi:namedview>
-  <g
-     id="g1173"
-     transform="matrix(2.285714285714289,0,0,2.285714285714289,-39.71428734915604,-5.428571973528211)"
-     style="opacity:1;fill:#945858;fill-opacity:1">
-    <path
-       style="opacity:1;fill:#945858;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.1777416766;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.0288461723;paint-order:normal"
-       d="m 18.47114329338074,3.179931879043568 h 3.05771484374999 v 0.806640625000022 h -1.047265625 v 2.833496093750011 h -0.96318359374999 v -2.833496093750061 h -1.047265625 z"
-       id="rect815-1"
-       inkscape:connector-curvature="0" />
-  </g>
+  <path
+     style="opacity:1;fill:#008000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.5019607843;paint-order:normal"
+     d="M 1 1 L 1 11 L 11 11 L 11 1 L 1 1 z M 2.505859375 1.83984375 L 9.494140625 1.83984375 L 9.494140625 3.68359375 L 7.1015625 3.68359375 L 7.1015625 10.16015625 L 4.8984375 10.16015625 L 4.8984375 3.68359375 L 2.505859375 3.68359375 L 2.505859375 1.83984375 z "
+     id="rect816" />
 </svg>

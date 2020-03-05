@@ -81,7 +81,8 @@ public class TestInsanityConfig
         try
         {
             new PatternBasedTestMethodSiblingMediator(
-                settings.getTestMethodNamePattern(), settings.getTestMethodNameCapitalizationScheme(),
+                settings.getTestMethodNamePattern(),
+                settings.getTestMethodNameCapitalizationScheme(),
                 settings.getTestAnnotations()
             ).validatePattern();
         }
