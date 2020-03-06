@@ -2,7 +2,7 @@ package org.bitstrings.idea.plugins.testinsanity.annotators;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.bitstrings.idea.plugins.testinsanity.util.KotlinJavaUtil.getLightClassMethod;
+import static org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil.getLightClassMethod;
 
 import java.util.Collections;
 import java.util.List;
@@ -134,6 +134,11 @@ public class TestAnnotator
         {
             PsiClass elementClass = (PsiClass) element;
 
+            if (elementClass.getName() == null)
+            {
+                return;
+            }
+
             if (renameTestService.getTestClassSiblingMediator().isTestClassName(elementClass.getName()))
             {
                 PsiClass subjectClass =
@@ -161,6 +166,11 @@ public class TestAnnotator
         if (element instanceof PsiMethod)
         {
             PsiClass elementClass = ((PsiMethod) element).getContainingClass();
+
+            if (elementClass.getName() == null)
+            {
+                return;
+            }
 
             if (renameTestService.getTestClassSiblingMediator().isTestClassName(elementClass.getName()))
             {

@@ -14,7 +14,7 @@
  */
 package org.bitstrings.idea.plugins.testinsanity;
 
-import static org.bitstrings.idea.plugins.testinsanity.util.KotlinJavaUtil.getLightClassMethod;
+import static org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil.getLightClassMethod;
 
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 

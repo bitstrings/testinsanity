@@ -2,7 +2,7 @@ package org.bitstrings.idea.plugins.testinsanity.actions;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.bitstrings.idea.plugins.testinsanity.util.KotlinJavaUtil.getLightClassMethod;
+import static org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil.getLightClassMethod;
 
 import java.util.List;
 
@@ -90,7 +90,7 @@ public class JumpToSiblingAction
                 elementClass = elementMethod.getContainingClass();
             }
 
-            if (elementClass == null)
+            if ((elementClass == null) || (elementClass.getName() == null))
             {
                 return null;
             }
@@ -208,6 +208,11 @@ public class JumpToSiblingAction
         }
 
         PsiClass elementClass = (PsiClass) elementParent;
+
+        if (elementClass.getName() == null)
+        {
+            return;
+        }
 
         RenameTestService renameTestService = RenameTestService.getInstance(project);
 

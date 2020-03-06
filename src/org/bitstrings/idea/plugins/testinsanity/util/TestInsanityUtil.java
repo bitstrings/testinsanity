@@ -5,9 +5,9 @@ import org.jetbrains.kotlin.psi.KtNamedFunction;
 
 import com.intellij.psi.PsiMethod;
 
-public final class KotlinJavaUtil
+public final class TestInsanityUtil
 {
-    private KotlinJavaUtil()
+    private TestInsanityUtil()
     {
     }
 

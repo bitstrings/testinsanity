@@ -128,6 +128,11 @@ public class RenameTestService
 
         Map<PsiMethod, String> renames = new LinkedHashMap<>();
 
+        if (subjectClass.getName() == null)
+        {
+            return renames;
+        }
+
         List<PsiMethod> testMethods =
             testMethodSiblingMediator
                 .getTestMethods(
@@ -149,7 +154,6 @@ public class RenameTestService
                 renames.put(testMethod, newTestMethodName);
             }
         }
-
         return renames;
     }
 
@@ -162,6 +166,11 @@ public class RenameTestService
         PsiClass testClass = testMethod.getContainingClass();
 
         Map<PsiMethod, String> renames = new LinkedHashMap<>();
+
+        if (testClass.getName() == null)
+        {
+            return renames;
+        }
 
         if (!testClassSiblingMediator.isTestClassName(testClass.getName()))
         {

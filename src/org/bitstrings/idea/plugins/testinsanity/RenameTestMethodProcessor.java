@@ -1,6 +1,6 @@
 package org.bitstrings.idea.plugins.testinsanity;
 
-import static org.bitstrings.idea.plugins.testinsanity.util.KotlinJavaUtil.getLightClassMethod;
+import static org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil.getLightClassMethod;
 
 import java.util.HashMap;
 import java.util.List;
@@ -116,7 +116,14 @@ public class RenameTestMethodProcessor
     {
         super.findExistingNameConflicts(element, newName, conflicts, allRenames);
         allRenames.forEach(
-            (rename, renameNewName) -> super.findExistingNameConflicts(rename, renameNewName, conflicts, allRenames));
+            (rename, renameNewName) ->
+            {
+                if (rename instanceof PsiMethod)
+                {
+                    super.findExistingNameConflicts(rename, renameNewName, conflicts, allRenames);
+                }
+            }
+        );
     }
 
     @Override
@@ -125,6 +132,14 @@ public class RenameTestMethodProcessor
     )
     {
         super.findCollisions(element, newName, allRenames, result);
-        allRenames.forEach((rename, renameNewName) -> super.findCollisions(rename, renameNewName, allRenames, result));
+        allRenames.forEach(
+            (rename, renameNewName) ->
+            {
+                if (rename instanceof PsiMethod)
+                {
+                    super.findCollisions(rename, renameNewName, allRenames, result);
+                }
+            }
+        );
     }
 }
