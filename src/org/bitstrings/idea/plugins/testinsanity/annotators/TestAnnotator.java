@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.actions.JumpToSiblingAction;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
 import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 
@@ -134,7 +135,7 @@ public class TestAnnotator
         {
             PsiClass elementClass = (PsiClass) element;
 
-            if (elementClass.getName() == null)
+            if (!TestInsanityUtil.psiNameIsSet(elementClass))
             {
                 return;
             }
@@ -167,7 +168,7 @@ public class TestAnnotator
         {
             PsiClass elementClass = ((PsiMethod) element).getContainingClass();
 
-            if (elementClass.getName() == null)
+            if (!TestInsanityUtil.psiNameIsSet(elementClass))
             {
                 return;
             }

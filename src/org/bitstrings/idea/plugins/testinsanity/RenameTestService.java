@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher.CapitalizationScheme;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -128,7 +129,7 @@ public class RenameTestService
 
         Map<PsiMethod, String> renames = new LinkedHashMap<>();
 
-        if (subjectClass.getName() == null)
+        if (!TestInsanityUtil.psiNameIsSet(subjectClass))
         {
             return renames;
         }
@@ -167,7 +168,7 @@ public class RenameTestService
 
         Map<PsiMethod, String> renames = new LinkedHashMap<>();
 
-        if (testClass.getName() == null)
+        if (!TestInsanityUtil.psiNameIsSet(testClass))
         {
             return renames;
         }

@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
 import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 
@@ -90,7 +91,7 @@ public class JumpToSiblingAction
                 elementClass = elementMethod.getContainingClass();
             }
 
-            if ((elementClass == null) || (elementClass.getName() == null))
+            if (!TestInsanityUtil.psiNameIsSet(elementClass))
             {
                 return null;
             }
@@ -209,7 +210,7 @@ public class JumpToSiblingAction
 
         PsiClass elementClass = (PsiClass) elementParent;
 
-        if (elementClass.getName() == null)
+        if (!TestInsanityUtil.psiNameIsSet(elementClass))
         {
             return;
         }
