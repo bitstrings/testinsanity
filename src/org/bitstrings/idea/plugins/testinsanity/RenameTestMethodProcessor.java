@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
 import org.jetbrains.kotlin.psi.KtFunction;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
@@ -44,6 +45,11 @@ public class RenameTestMethodProcessor
         PsiElement element, String newName, Map<PsiElement, String> allRenames, SearchScope scope
     )
     {
+        if (StringUtils.isEmpty(newName))
+        {
+            return;
+        }
+
         if (element instanceof KtNamedFunction)
         {
             element = getLightClassMethod((KtNamedFunction) element);

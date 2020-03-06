@@ -9,6 +9,7 @@ import java.util.List;
 
 import javax.swing.Icon;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.actions.JumpToSiblingAction;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
@@ -194,8 +196,8 @@ public class TestAnnotator
             return;
         }
 
-        String message = "Found " + testClasses.size() + " Test Class(es)";
-        String tooltip = "Found <b>" + testClasses.size() + "</b> Test Class(es)";
+        String message = "Class Tested (Found " + testClasses.size() + ")";
+        String tooltip = message;
         GutterIconRenderer iconRenderer = new TestMatchGutterIconRenderer(GUTTER_CLASS_ICON, subjectClass, tooltip);
 
         createAnnotation(annotationHolder, subjectClass, message, iconRenderer);
@@ -214,7 +216,8 @@ public class TestAnnotator
             String subjectClassPres = ClassPresentationUtil.getNameForClass(subjectClass, true);
 
             message = "Subject Class [ " + subjectClassPres + " ]";
-            tooltip = "Subject Class [ <a href=\"#javaClass/" + subjectClassPres + "\">" + subjectClassPres + "</a> ]";
+            tooltip = "Subject Class [ <a href=\"#javaClass/" + subjectClassPres + "\">"
+                + getAbbreviatedText(subjectClassPres, 48) + "</a> ]";
             iconRenderer = new TestMatchGutterIconRenderer(GUTTER_CLASS_ICON, testClass, tooltip);
         }
         else
@@ -254,14 +257,15 @@ public class TestAnnotator
             {
                 String siblingMethodClassPres = ClassPresentationUtil.getContextName(siblingMethods.get(0), true);
                 String siblingtMethodNamePres = siblingMethods.get(0).getName();
-                String siblingMethodPres = siblingMethodClassPres + "." + siblingtMethodNamePres;
+                String siblingMethodPres =
+                    getAbbreviatedText(siblingMethodClassPres + "." + siblingtMethodNamePres, 48);
 
                 message =
                     foundMessageIdentifier
-                        + " Name [ " + siblingMethodPres + " ] (" + siblingMethods.size() + " Found)";
+                        + " Method [ " + siblingMethodPres + " ] (" + siblingMethods.size() + " Found)";
                 tooltip =
                     foundMessageIdentifier
-                        + " Name [ <a href=\"#javaClass/" + siblingMethodClassPres + "\">"
+                        + " Method [ <a href=\"#javaClass/" + siblingMethodClassPres + "\">"
                         + siblingMethodPres
                         + "</a> ]"
                         + " (" + siblingMethods.size() + " Found)";
@@ -285,11 +289,17 @@ public class TestAnnotator
     }
 
     protected void createAnnotation(
-        AnnotationHolder annotationHolder, PsiNamedElement namedElement, String message, GutterIconRenderer iconRenderer
+        AnnotationHolder annotationHolder, PsiNamedElement element, String message, GutterIconRenderer iconRenderer
     )
     {
-        Annotation annotation = annotationHolder.createInfoAnnotation(namedElement, message);
+        Annotation annotation =
+            annotationHolder.createAnnotation(HighlightSeverity.INFORMATION, element.getTextRange(), message);
         annotation.setGutterIconRenderer(iconRenderer);
         annotation.setNeedsUpdateOnTyping(true);
+    }
+
+    private String getAbbreviatedText(String text, int maxLength)
+    {
+        return StringUtils.abbreviate(text, text.length() - maxLength, maxLength + 4);
     }
 }
