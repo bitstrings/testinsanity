@@ -43,6 +43,7 @@ public class TestInsanityForm
     private JTextPane itIsRecommendedToTextPane;
     private JCheckBox showGutterAnnotationCheckBox;
     private JCheckBox showRenamingDialogCheckBox;
+    private JCheckBox includeInheritedMethodsCheckBox;
 
     private final ArrayList<String> presetPreviewPaneTexts = new ArrayList<>();
 
@@ -67,6 +68,7 @@ public class TestInsanityForm
         enableNavigationCheckBox.setSelected(settings.isNavigationEnabled());
         showRenamingDialogCheckBox.setSelected(settings.isRenamingDialogEnabled());
         showGutterAnnotationCheckBox.setSelected(settings.isGutterAnnotationEnabled());
+        includeInheritedMethodsCheckBox.setSelected(settings.isIncludeInheritedMethods());
 
         testMethodPresetCombo.removeAllItems();
 
@@ -154,6 +156,7 @@ public class TestInsanityForm
         settings.setNavigationEnabled(enableNavigationCheckBox.isSelected());
         settings.setRenamingDialogEnabled(showRenamingDialogCheckBox.isSelected());
         settings.setGutterAnnotationEnabled(showGutterAnnotationCheckBox.isSelected());
+        settings.setIncludeInheritedMethods(includeInheritedMethodsCheckBox.isSelected());
     }
 
     public boolean isModified()
@@ -172,6 +175,7 @@ public class TestInsanityForm
             || (enableRefactoringSupportCheckBox.isSelected() != settings.isRefactoringEnabled())
             || (enableNavigationCheckBox.isSelected() != settings.isNavigationEnabled())
             || (showRenamingDialogCheckBox.isSelected() != settings.isNavigationEnabled())
-            || (showGutterAnnotationCheckBox.isSelected() != settings.isGutterAnnotationEnabled());
+            || (showGutterAnnotationCheckBox.isSelected() != settings.isGutterAnnotationEnabled())
+            || (includeInheritedMethodsCheckBox.isSelected() != settings.isIncludeInheritedMethods());
     }
 }

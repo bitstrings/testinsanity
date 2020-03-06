@@ -41,9 +41,9 @@
      inkscape:window-height="2098"
      id="namedview1595"
      showgrid="true"
-     inkscape:zoom="63.99999976361901"
-     inkscape:cx="-2.314145706208249"
-     inkscape:cy="6.497246216192965"
+     inkscape:zoom="5.656854265908524"
+     inkscape:cx="-115.4112871171965"
+     inkscape:cy="83.58091143514916"
      inkscape:window-x="0"
      inkscape:window-y="32"
      inkscape:window-maximized="1"
@@ -59,8 +59,21 @@
        type="xygrid"
        id="grid1756" />
   </sodipodi:namedview>
-  <path
-     style="opacity:1;fill:#945858;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.5019607843;paint-order:normal"
-     d="M 1 1 L 1 11 L 11 11 L 11 1 L 1 1 z M 2.505859375 1.83984375 L 9.494140625 1.83984375 L 9.494140625 3.68359375 L 7.1015625 3.68359375 L 7.1015625 10.16015625 L 4.8984375 10.16015625 L 4.8984375 3.68359375 L 2.505859375 3.68359375 L 2.505859375 1.83984375 z "
-     id="rect816" />
+  <rect
+     style="opacity:1;fill:#944040;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.5019607843;paint-order:normal"
+     id="rect863"
+     width="12"
+     height="12"
+     x="0"
+     y="0" />
+  <g
+     id="g1173"
+     transform="matrix(2.285714285714289,0,0,2.285714285714289,-39.71428734915604,-5.428571973528211)"
+     style="fill:#000000;fill-opacity:0.5019607843">
+    <path
+       style="opacity:1;fill:#000000;fill-opacity:0.5019607843;fill-rule:nonzero;stroke:none;stroke-width:0.1777416766;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.0288461723;paint-order:normal"
+       d="m 18.47114329338074,3.179931879043568 h 3.05771484374999 v 0.806640625000022 h -1.047265625 v 2.833496093750011 h -0.96318359374999 v -2.833496093750061 h -1.047265625 z"
+       id="rect815-1"
+       inkscape:connector-curvature="0" />
+  </g>
 </svg>

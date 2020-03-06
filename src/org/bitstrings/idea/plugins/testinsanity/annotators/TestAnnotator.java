@@ -16,6 +16,8 @@ import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
 import org.jetbrains.kotlin.psi.KtClass;
 import org.jetbrains.kotlin.psi.KtNamedFunction;
 
+import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer;
+import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -24,11 +26,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
@@ -45,15 +49,26 @@ public class TestAnnotator
     private static final String NO_SUBJECT_CLASS_MESSAGE = "Missing Test Subject Class";
 
     private static class TestMatchGutterIconRenderer
-        extends GutterIconRenderer
+        extends NavigationGutterIconRenderer
     {
         private final Icon icon;
         private final int hashCode;
         private final PsiElement element;
         private final String tooltip;
 
-        public TestMatchGutterIconRenderer(Icon icon, PsiElement element, String tooltip)
+        public TestMatchGutterIconRenderer(
+            String popupTitle,
+            String emptyText,
+            Icon icon, PsiElement element, String tooltip
+        )
         {
+            super(
+                popupTitle,
+                emptyText,
+                DefaultPsiElementCellRenderer::new,
+                NotNullLazyValue.createConstantValue(singletonList(SmartPointerManager.createPointer(element)))
+            );
+
             this.icon = icon;
             this.hashCode = getIcon().hashCode();
             this.element = element;
@@ -198,7 +213,8 @@ public class TestAnnotator
 
         String message = "Class Tested (Found " + testClasses.size() + ")";
         String tooltip = message;
-        GutterIconRenderer iconRenderer = new TestMatchGutterIconRenderer(GUTTER_CLASS_ICON, subjectClass, tooltip);
+        GutterIconRenderer iconRenderer =
+            new TestMatchGutterIconRenderer(message, message, GUTTER_CLASS_ICON, subjectClass, tooltip);
 
         createAnnotation(annotationHolder, subjectClass, message, iconRenderer);
     }
@@ -218,13 +234,13 @@ public class TestAnnotator
             message = "Subject Class [ " + subjectClassPres + " ]";
             tooltip = "Subject Class [ <a href=\"#javaClass/" + subjectClassPres + "\">"
                 + getAbbreviatedText(subjectClassPres, 48) + "</a> ]";
-            iconRenderer = new TestMatchGutterIconRenderer(GUTTER_CLASS_ICON, testClass, tooltip);
+            iconRenderer = new TestMatchGutterIconRenderer(message, message, GUTTER_CLASS_ICON, testClass, tooltip);
         }
         else
         {
             message = NO_SUBJECT_CLASS_MESSAGE;
             iconRenderer = new TestMatchGutterIconRenderer(
-                GUTTER_CLASS_ORPHAN_ICON, testClass, NOT_LINKED_TO_SUBJECT_MESSAGE);
+                message, message, GUTTER_CLASS_ORPHAN_ICON, testClass, NOT_LINKED_TO_SUBJECT_MESSAGE);
         }
 
         createAnnotation(annotationHolder, testClass, message, iconRenderer);
@@ -251,7 +267,7 @@ public class TestAnnotator
 
                 message = NOT_LINKED_TO_SUBJECT_MESSAGE;
                 iconRenderer = new TestMatchGutterIconRenderer(
-                    GUTTER_METHOD_ORPHAN_ICON, method, NOT_LINKED_TO_SUBJECT_MESSAGE);
+                    message, message, GUTTER_METHOD_ORPHAN_ICON, method, NOT_LINKED_TO_SUBJECT_MESSAGE);
             }
             else
             {
@@ -270,7 +286,7 @@ public class TestAnnotator
                         + "</a> ]"
                         + " (" + siblingMethods.size() + " Found)";
 
-                iconRenderer = new TestMatchGutterIconRenderer(GUTTER_METHOD_ICON, method, tooltip);
+                iconRenderer = new TestMatchGutterIconRenderer(message, message, GUTTER_METHOD_ICON, method, tooltip);
             }
         }
         else
@@ -282,7 +298,8 @@ public class TestAnnotator
 
             message = NO_SUBJECT_CLASS_MESSAGE;
             iconRenderer =
-                new TestMatchGutterIconRenderer(GUTTER_METHOD_ORPHAN_ICON, method, NO_SUBJECT_CLASS_MESSAGE);
+                new TestMatchGutterIconRenderer(
+                    message, message, GUTTER_METHOD_ORPHAN_ICON, method, NO_SUBJECT_CLASS_MESSAGE);
         }
 
         createAnnotation(annotationHolder, method, message, iconRenderer);

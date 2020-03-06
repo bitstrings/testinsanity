@@ -44,16 +44,31 @@
               <text value="${className}Test"/>
             </properties>
           </component>
-          <component id="5ae70" class="javax.swing.JTextPane" default-binding="true">
+          <grid id="1f562" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                <preferred-size width="150" height="50"/>
-              </grid>
+              <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
-            <properties>
-              <text value="${className} = source file name (can appear only once)&#10;(Test|IT) = 'Test' or 'IT'&#10;(Test|) = 'Test' or nothing"/>
-            </properties>
-          </component>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="5ae70" class="javax.swing.JTextPane" default-binding="true">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                    <preferred-size width="150" height="50"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="${className} = source file name (can appear only once)&#10;(Test|IT) = 'Test' or 'IT'&#10;(Test|) = 'Test' or nothing"/>
+                </properties>
+              </component>
+              <hspacer id="f8b60">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                </constraints>
+              </hspacer>
+            </children>
+          </grid>
         </children>
       </grid>
       <scrollpane id="f45c7">
@@ -89,16 +104,6 @@
                 </constraints>
                 <properties>
                   <text value="test${subjectName}"/>
-                </properties>
-              </component>
-              <component id="35bdc" class="javax.swing.JTextPane" default-binding="true">
-                <constraints>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="2" hsize-policy="6" anchor="1" fill="1" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="50"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text value="${subjectName} = subject method name (can appear only once)&#10;(test|spec) = 'test' or 'spec'&#10;(test|) = 'test' or nothing&#10;&#10;Only valid for suffix:&#10;* = any string (can be empty)&#10;+ = any string with at least 1 character"/>
                 </properties>
               </component>
               <grid id="98861" binding="testMethodPresetPatternsPanel" layout-manager="GridLayoutManager" row-count="3" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -225,6 +230,40 @@
                       </hspacer>
                     </children>
                   </grid>
+                </children>
+              </grid>
+              <grid id="c2c96" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="empty"/>
+                <children>
+                  <component id="35bdc" class="javax.swing.JTextPane" default-binding="true">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="2" hsize-policy="6" anchor="1" fill="1" indent="0" use-parent-layout="false">
+                        <preferred-size width="150" height="50"/>
+                      </grid>
+                    </constraints>
+                    <properties>
+                      <text value="${subjectName} = subject method name (can appear only once)&#10;(test|spec) = 'test' or 'spec'&#10;(test|) = 'test' or nothing&#10;&#10;Only valid for suffix:&#10;* = any string (can be empty)&#10;+ = any string with at least 1 character"/>
+                    </properties>
+                  </component>
+                  <hspacer id="df746">
+                    <constraints>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                  </hspacer>
+                  <component id="8f56b" class="javax.swing.JCheckBox" binding="includeInheritedMethodsCheckBox" default-binding="true">
+                    <constraints>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <selected value="true"/>
+                      <text value="Include Inherited Methods"/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
             </children>

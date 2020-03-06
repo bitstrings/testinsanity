@@ -139,11 +139,6 @@ public class RenameTestService
                         )
                 );
 
-//        if (!Objects.equals(oldSubjectName, newSubjectName))
-//        {
-//            renames.put(subjectMethod, newSubjectName);
-//        }
-
         for (PsiMethod testMethod : testMethods)
         {
             String newTestMethodName =
@@ -236,7 +231,8 @@ public class RenameTestService
             new PatternBasedTestMethodSiblingMediator(
                 settings.getTestMethodNamePattern(),
                 CapitalizationScheme.IF_PREFIXED,
-                settings.getTestAnnotations()
+                settings.getTestAnnotations(),
+                settings.isIncludeInheritedMethods()
             );
 
 

@@ -32,15 +32,18 @@ public class PatternBasedTestMethodSiblingMediator
 
     private final TestPatternMatcher testMethodPatternMatcher;
 
+    private final boolean includeInheritedMethods;
+
     public PatternBasedTestMethodSiblingMediator()
     {
-        this(DEFAULT_METHOD_NAME_PATTERN, CapitalizationScheme.IF_PREFIXED, emptySet());
+        this(DEFAULT_METHOD_NAME_PATTERN, CapitalizationScheme.IF_PREFIXED, emptySet(), true);
     }
 
     public PatternBasedTestMethodSiblingMediator(
         String testMethodNamePattern,
         CapitalizationScheme capitalizeSubjectNameScheme,
-        Set<String> testMethodAnnotations
+        Set<String> testMethodAnnotations,
+        boolean includeInheritedMethods
     )
         throws TestPatternException
     {
@@ -53,6 +56,7 @@ public class PatternBasedTestMethodSiblingMediator
                 capitalizeSubjectNameScheme
             );
         this.testMethodAnnotations = testMethodAnnotations;
+        this.includeInheritedMethods = includeInheritedMethods;
     }
 
     public String getTestMethodNamePattern()
@@ -87,7 +91,7 @@ public class PatternBasedTestMethodSiblingMediator
 
         testClasses
             .forEach(
-                testClass -> Arrays.stream(testClass.getAllMethods())
+                testClass -> Arrays.stream(includeInheritedMethods ? testClass.getAllMethods() : testClass.getMethods())
                     .forEach(
                         method ->
                         {
@@ -117,7 +121,9 @@ public class PatternBasedTestMethodSiblingMediator
         TestPatternMatchResult testNameParts =
             testMethodPatternMatcher.findTestMatch(
                 testMethod.getName(),
-                Arrays.stream(subjectClass.getAllMethods()).map(PsiMethod::getName).collect(toList())
+                Arrays.stream(
+                    includeInheritedMethods ? subjectClass.getAllMethods() : subjectClass.getMethods()
+                ).map(PsiMethod::getName).collect(toList())
             );
 
         if (!testNameParts.isMatched())

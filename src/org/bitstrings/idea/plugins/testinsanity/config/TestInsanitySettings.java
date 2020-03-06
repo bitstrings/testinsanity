@@ -59,6 +59,8 @@ public class TestInsanitySettings
 
     public boolean gutterAnnotationEnabled;
 
+    public boolean includeInheritedMethods;
+
     public TestInsanitySettings()
     {
         setTestkAnnotation(TestAnnotation.JUNIT4, true);
@@ -71,6 +73,7 @@ public class TestInsanitySettings
         setNavigationEnabled(true);
         setRenamingDialogEnabled(true);
         setGutterAnnotationEnabled(true);
+        setIncludeInheritedMethods(true);
     }
 
     public static TestInsanitySettings getInstance(Project project)
@@ -188,5 +191,15 @@ public class TestInsanitySettings
     public boolean isGutterAnnotationEnabled()
     {
         return gutterAnnotationEnabled;
+    }
+
+    public void setIncludeInheritedMethods(boolean includeInheritedMethods)
+    {
+        this.includeInheritedMethods = includeInheritedMethods;
+    }
+
+    public boolean isIncludeInheritedMethods()
+    {
+        return includeInheritedMethods;
     }
 }

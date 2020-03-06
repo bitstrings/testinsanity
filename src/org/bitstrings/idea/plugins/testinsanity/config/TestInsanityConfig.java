@@ -83,7 +83,8 @@ public class TestInsanityConfig
             new PatternBasedTestMethodSiblingMediator(
                 settings.getTestMethodNamePattern(),
                 settings.getTestMethodNameCapitalizationScheme(),
-                settings.getTestAnnotations()
+                settings.getTestAnnotations(),
+                settings.isIncludeInheritedMethods()
             ).validatePattern();
         }
         catch (TestPatternException e)
