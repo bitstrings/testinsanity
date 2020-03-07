@@ -112,13 +112,17 @@ public class TestAnnotator
     {
         Project project = element.getProject();
 
-        if (!TestInsanitySettings.getInstance(project).isGutterAnnotationEnabled())
+        TestInsanitySettings settings = TestInsanitySettings.getInstance(project);
+
+        if (!settings.isGutterAnnotationEnabled())
         {
             return;
         }
 
         RenameTestService renameTestService = RenameTestService.getInstance(project);
         GlobalSearchScope searchScope = renameTestService.getSearchScope(element, ProjectFilesScope.INSTANCE);
+
+        boolean annotationCheckEnabled = !settings.getTestAnnotations().isEmpty();
 
         if (element instanceof KtNamedFunction)
         {
@@ -164,52 +168,58 @@ public class TestAnnotator
             return;
         }
 
-        if (element instanceof PsiMethod)
+        if (
+            !(element instanceof PsiMethod)
+                || (annotationCheckEnabled && !renameTestService.getTestMethodSiblingMediator()
+                    .checkMethodAnnotation((PsiMethod) element, true))
+        )
         {
-            PsiClass elementClass = ((PsiMethod) element).getContainingClass();
+            return;
+        }
 
-            if (!TestInsanityUtil.psiNameIsSet(elementClass))
-            {
-                return;
-            }
+        PsiClass elementClass = ((PsiMethod) element).getContainingClass();
 
-            if (renameTestService.getTestClassSiblingMediator().isTestClassName(elementClass.getName()))
-            {
-                PsiClass subjectClass =
-                    renameTestService
-                        .getTestClassSiblingMediator()
-                        .getSubjectClass(elementClass, searchScope);
+        if (!TestInsanityUtil.psiNameIsSet(elementClass))
+        {
+            return;
+        }
 
-                List<PsiMethod> subjectMethods =
-                    subjectClass == null
-                        ? emptyList()
-                        : renameTestService.getTestMethodSiblingMediator()
-                            .getSubjectMethods((PsiMethod) element, subjectClass);
+        if (renameTestService.getTestClassSiblingMediator().isTestClassName(elementClass.getName()))
+        {
+            PsiClass subjectClass =
+                renameTestService
+                    .getTestClassSiblingMediator()
+                    .getSubjectClass(elementClass, searchScope);
 
-                annotateTestMethod(
-                    (PsiMethod) element,
-                    (subjectClass == null ? Collections.emptyList() : singletonList(subjectClass)), subjectMethods,
-                    "Subject", false,
-                    renameTestService, annotationHolder
-                );
-            }
-            else
-            {
-                List<PsiClass> testClasses =
-                    renameTestService
-                        .getTestClassSiblingMediator()
-                        .getTestClasses(elementClass, searchScope);
+            List<PsiMethod> subjectMethods =
+                subjectClass == null
+                    ? emptyList()
+                    : renameTestService.getTestMethodSiblingMediator()
+                        .getSubjectMethods((PsiMethod) element, subjectClass);
 
-                List<PsiMethod> testMethods =
-                    renameTestService.getTestMethodSiblingMediator()
-                        .getTestMethods((PsiMethod) element, testClasses);
+            annotateTestMethod(
+                (PsiMethod) element,
+                (subjectClass == null ? Collections.emptyList() : singletonList(subjectClass)), subjectMethods,
+                "Subject", !annotationCheckEnabled,
+                renameTestService, annotationHolder
+            );
+        }
+        else
+        {
+            List<PsiClass> testClasses =
+                renameTestService
+                    .getTestClassSiblingMediator()
+                    .getTestClasses(elementClass, searchScope);
 
-                annotateTestMethod(
-                    (PsiMethod) element, testClasses, testMethods,
-                    "Test", true,
-                    renameTestService, annotationHolder
-                );
-            }
+            List<PsiMethod> testMethods =
+                renameTestService.getTestMethodSiblingMediator()
+                    .getTestMethods((PsiMethod) element, testClasses);
+
+            annotateTestMethod(
+                (PsiMethod) element, testClasses, testMethods,
+                "Test", true,
+                renameTestService, annotationHolder
+            );
         }
     }
 
