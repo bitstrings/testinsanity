@@ -168,11 +168,7 @@ public class TestAnnotator
             return;
         }
 
-        if (
-            !(element instanceof PsiMethod)
-                || (annotationCheckEnabled && !renameTestService.getTestMethodSiblingMediator()
-                    .checkMethodAnnotation((PsiMethod) element, true))
-        )
+        if (!(element instanceof PsiMethod))
         {
             return;
         }
@@ -186,6 +182,15 @@ public class TestAnnotator
 
         if (renameTestService.getTestClassSiblingMediator().isTestClassName(elementClass.getName()))
         {
+            if (
+                annotationCheckEnabled
+                    &&
+                    !renameTestService.getTestMethodSiblingMediator().checkMethodAnnotation((PsiMethod) element, true)
+            )
+            {
+                return;
+            }
+
             PsiClass subjectClass =
                 renameTestService
                     .getTestClassSiblingMediator()
