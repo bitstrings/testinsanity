@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>org.bitstrings.idea.plugins.TestInsanity</id>
     <name>TestInsanity</name>
-    <version>1.3.0</version>
+    <version>1.3.2</version>
     <vendor email="pino.silvaggio@gmail.com" url="https://github.com/bitstrings/testinsanity">bitstrings.org</vendor>
 
     <description><![CDATA[
@@ -23,7 +23,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-      <b>v1.3.0</b><br/>
+      <b>v1.3.2</b><br/>
       First public release.
     ]]>
     </change-notes>
