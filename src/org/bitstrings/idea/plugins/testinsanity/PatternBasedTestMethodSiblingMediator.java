@@ -131,7 +131,8 @@ public class PatternBasedTestMethodSiblingMediator
             return emptyList();
         }
 
-        PsiMethod[] subjectMethods = subjectClass.findMethodsByName(testNameParts.getSubject(), true);
+        PsiMethod[] subjectMethods =
+            subjectClass.findMethodsByName(testNameParts.getSubject(), includeInheritedMethods);
 
         return subjectMethods == null
             ? emptyList()
