@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>org.bitstrings.idea.plugins.TestInsanity</id>
     <name>TestInsanity</name>
-    <version>1.3.2</version>
+    <version>1.0.2</version>
     <vendor email="pino.silvaggio@gmail.com" url="https://github.com/bitstrings/testinsanity">bitstrings.org</vendor>
 
     <description><![CDATA[
@@ -9,9 +9,10 @@
       <br/>
       <ul>
         <li>Pattern based renaming</>
-        <li>Test annotation aware</li>
+        <li>Test frameworks annotations aware</li>
         <li>Gutter annotation icon</li>
-        <li>Test subject navigation (default shortcut: CTRL+ALT+`)</li>
+        <li>Navigation Go To->Jump to Sibling (default shortcut: CTRL+ALT+`)</li>
+        <li>Menu/Toolbar refactoring support toggle</li>
         <li>Per Project settings</li>
         <li>Kotlin Support</li>
       </ul>
@@ -23,7 +24,7 @@
     ]]></description>
 
     <change-notes><![CDATA[
-      <b>v1.3.2</b><br/>
+      <b>v1.0.2</b><br/>
       First public release.
     ]]>
     </change-notes>
@@ -60,7 +61,7 @@
     <actions>
         <action id="org.bitstrings.idea.plugins.testinsanity.actions.JumpToSiblingAction"
                 class="org.bitstrings.idea.plugins.testinsanity.actions.JumpToSiblingAction"
-                text="_Jump to sibling"
+                text="_Jump to Sibling"
                 description="Jump to its sibling">
             <add-to-group group-id="GoToCodeGroup" anchor="after" relative-to-action="GotoTest"/>
             <add-to-group group-id="EditorPopupMenu.GoTo" anchor="after" relative-to-action="GotoTest"/>
