@@ -41,6 +41,8 @@ import com.intellij.psi.search.scope.ProjectFilesScope;
 public class TestAnnotator
     implements Annotator
 {
+    private static final int MAX_FQN_LENGTH = 72;
+
     private static final Icon GUTTER_CLASS_ICON = IconLoader.getIcon("/icons/gutter_class_icon.svg");
     private static final Icon GUTTER_CLASS_ORPHAN_ICON = IconLoader.getIcon("/icons/gutter_class_orphan_icon.svg");
     private static final Icon GUTTER_METHOD_ICON = IconLoader.getIcon("/icons/gutter_icon.svg");
@@ -259,7 +261,7 @@ public class TestAnnotator
 
             message = "Subject Class [ " + subjectClassPres + " ]";
             tooltip = "Subject Class [ <a href=\"#javaClass/" + subjectClassPres + "\">"
-                + getAbbreviatedText(subjectClassPres, 48) + "</a> ]";
+                + getAbbreviatedText(subjectClassPres, MAX_FQN_LENGTH) + "</a> ]";
             iconRenderer = new TestMatchGutterIconRenderer(message, message, GUTTER_CLASS_ICON, testClass, tooltip);
         }
         else
@@ -300,7 +302,7 @@ public class TestAnnotator
                 String siblingMethodClassPres = ClassPresentationUtil.getContextName(siblingMethods.get(0), true);
                 String siblingtMethodNamePres = siblingMethods.get(0).getName();
                 String siblingMethodPres =
-                    getAbbreviatedText(siblingMethodClassPres + "." + siblingtMethodNamePres, 48);
+                    getAbbreviatedText(siblingMethodClassPres + "." + siblingtMethodNamePres, MAX_FQN_LENGTH);
 
                 message =
                     foundMessageIdentifier
