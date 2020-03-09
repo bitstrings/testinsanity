@@ -12,7 +12,7 @@
    viewBox="0 0 12 12"
    version="1.1"
    id="svg1593"
-   sodipodi:docname="gutter_class_icon.svg"
+   sodipodi:docname="gutter_class_icon_dark.svg"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)">
   <metadata
      id="metadata1599">
@@ -41,9 +41,9 @@
      inkscape:window-height="2098"
      id="namedview1595"
      showgrid="true"
-     inkscape:zoom="64.00000006753697"
-     inkscape:cx="-3.334168941081924"
-     inkscape:cy="3.269572131244276"
+     inkscape:zoom="32.00000005065284"
+     inkscape:cx="-6.400200182709675"
+     inkscape:cy="12.15831567136129"
      inkscape:window-x="0"
      inkscape:window-y="32"
      inkscape:window-maximized="1"
@@ -67,5 +67,5 @@
      inkscape:connector-curvature="0"
      id="rect815-1"
      d="m 2.505468750000005,1.83984374999996 h 6.98906249999999 v 1.843750000000052 h -2.393750000000002 v 6.476562500000029 h -2.201562499999981 v -6.47656250000015 h -2.393750000000006 z"
-     style="opacity:1;fill:#ffffff;fill-opacity:0.1254902035;fill-rule:nonzero;stroke:none;stroke-width:0.4062666893;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.0288461723;paint-order:normal" />
+     style="opacity:1;fill:#000000;fill-opacity:0.3764705956;fill-rule:nonzero;stroke:none;stroke-width:0.4062666893;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.0288461723;paint-order:normal" />
 </svg>

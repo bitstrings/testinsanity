@@ -12,7 +12,7 @@
    viewBox="0 0 12 12"
    version="1.1"
    id="svg1593"
-   sodipodi:docname="gutter_class_icon.svg"
+   sodipodi:docname="gutter_class_orphan_icon_dark.svg"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)">
   <metadata
      id="metadata1599">
@@ -41,9 +41,9 @@
      inkscape:window-height="2098"
      id="namedview1595"
      showgrid="true"
-     inkscape:zoom="64.00000006753697"
-     inkscape:cx="-3.334168941081924"
-     inkscape:cy="3.269572131244276"
+     inkscape:zoom="45.25483405563384"
+     inkscape:cx="2.369584145557068"
+     inkscape:cy="5.642522785882115"
      inkscape:window-x="0"
      inkscape:window-y="32"
      inkscape:window-maximized="1"
@@ -60,12 +60,16 @@
        id="grid1756" />
   </sodipodi:namedview>
   <path
-     style="opacity:1;fill:#008000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.5019607843;paint-order:normal"
+     style="opacity:1;fill:#ac4040;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.5019607843;paint-order:normal"
      d="M 0 0 L 0 12 L 12 12 L 12 0 L 0 0 z M 2.505859375 1.83984375 L 9.494140625 1.83984375 L 9.494140625 3.68359375 L 7.1015625 3.68359375 L 7.1015625 10.16015625 L 4.8984375 10.16015625 L 4.8984375 3.68359375 L 2.505859375 3.68359375 L 2.505859375 1.83984375 z "
      id="rect863" />
+  <g
+     id="g1173"
+     transform="matrix(2.285714285714289,0,0,2.285714285714289,-39.71428734915604,-5.428571973528211)"
+     style="fill:#000000;fill-opacity:0.5019607843" />
   <path
      inkscape:connector-curvature="0"
      id="rect815-1"
-     d="m 2.505468750000005,1.83984374999996 h 6.98906249999999 v 1.843750000000052 h -2.393750000000002 v 6.476562500000029 h -2.201562499999981 v -6.47656250000015 h -2.393750000000006 z"
-     style="opacity:1;fill:#ffffff;fill-opacity:0.1254902035;fill-rule:nonzero;stroke:none;stroke-width:0.4062666893;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.0288461723;paint-order:normal" />
+     d="m 2.505468750000002,1.83984374999996 h 6.989062499999993 v 1.843750000000052 h -2.393750000000001 v 6.476562500000029 h -2.201562499999978 v -6.47656250000015 h -2.393750000000012 z"
+     style="opacity:1;fill:#000000;fill-opacity:0.3764705882;fill-rule:nonzero;stroke:none;stroke-width:0.4062666893;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:0.0288461723;paint-order:normal" />
 </svg>
