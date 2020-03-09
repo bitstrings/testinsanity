@@ -53,22 +53,7 @@ public class TestInsanityForm
     {
         this.settings = settings;
 
-        testAnnotationJunit4CheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.JUNIT4));
-        testAnnotationJunit5CheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.JUNIT5));
-        testAnnotationTestNgCheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.TESTNG));
-        testClassPatternTextField.setText(settings.getTestClassPattern());
-        testMethodNamePatternTextField.setText(settings.getTestMethodNamePattern());
-        testMethodNameCapSchemeOnlyIfPrefixedRadio
-            .setSelected(settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.IF_PREFIXED);
-        testMethodNameCapSchemeAlwaysRadio
-            .setSelected(settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.ALWAYS);
-        testMethodNameCapSchemeUnchangedRadio
-            .setSelected(settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.UNCHANGED);
-        enableRefactoringSupportCheckBox.setSelected(settings.isRefactoringEnabled());
-        enableNavigationCheckBox.setSelected(settings.isNavigationEnabled());
-        showRenamingDialogCheckBox.setSelected(settings.isRenamingDialogEnabled());
-        showGutterAnnotationCheckBox.setSelected(settings.isGutterAnnotationEnabled());
-        includeInheritedMethodsCheckBox.setSelected(settings.isIncludeInheritedMethods());
+        init();
 
         testMethodPresetCombo.removeAllItems();
 
@@ -120,6 +105,26 @@ public class TestInsanityForm
         return settingsPanel;
     }
 
+    public void init()
+    {
+        testAnnotationJunit4CheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.JUNIT4));
+        testAnnotationJunit5CheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.JUNIT5));
+        testAnnotationTestNgCheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.TESTNG));
+        testClassPatternTextField.setText(settings.getTestClassPattern());
+        testMethodNamePatternTextField.setText(settings.getTestMethodNamePattern());
+        testMethodNameCapSchemeOnlyIfPrefixedRadio
+            .setSelected(settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.IF_PREFIXED);
+        testMethodNameCapSchemeAlwaysRadio
+            .setSelected(settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.ALWAYS);
+        testMethodNameCapSchemeUnchangedRadio
+            .setSelected(settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.UNCHANGED);
+        enableRefactoringSupportCheckBox.setSelected(settings.isRefactoringEnabled());
+        enableNavigationCheckBox.setSelected(settings.isNavigationEnabled());
+        showRenamingDialogCheckBox.setSelected(settings.isRenamingDialogEnabled());
+        showGutterAnnotationCheckBox.setSelected(settings.isGutterAnnotationEnabled());
+        includeInheritedMethodsCheckBox.setSelected(settings.isIncludeInheritedMethods());
+    }
+
     public void apply()
     {
         settings
@@ -143,11 +148,11 @@ public class TestInsanityForm
         {
             settings.setTestMethodNameCapitalizationScheme(CapitalizationScheme.IF_PREFIXED);
         }
-        if (testMethodNameCapSchemeAlwaysRadio.isSelected())
+        else if (testMethodNameCapSchemeAlwaysRadio.isSelected())
         {
             settings.setTestMethodNameCapitalizationScheme(CapitalizationScheme.ALWAYS);
         }
-        if (testMethodNameCapSchemeUnchangedRadio.isSelected())
+        else if (testMethodNameCapSchemeUnchangedRadio.isSelected())
         {
             settings.setTestMethodNameCapitalizationScheme(CapitalizationScheme.UNCHANGED);
         }

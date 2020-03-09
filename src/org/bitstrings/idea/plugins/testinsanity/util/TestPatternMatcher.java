@@ -1,6 +1,7 @@
 package org.bitstrings.idea.plugins.testinsanity.util;
 
 import static java.util.Collections.singletonList;
+import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.apache.commons.lang3.StringUtils.substringAfter;
 import static org.apache.commons.lang3.StringUtils.substringBefore;
 import static org.apache.commons.lang3.StringUtils.uncapitalize;
@@ -209,21 +210,22 @@ public final class TestPatternMatcher
 
         String restValue = matcher.group("rest");
 
-        if (
-            (subjectCapitalizationScheme == CapitalizationScheme.ALWAYS)
-                || ((subjectCapitalizationScheme == CapitalizationScheme.IF_PREFIXED) && !prefixValue.isEmpty())
-        )
-        {
-            restValue = uncapitalize(restValue);
-        }
-
         String foundValue = "";
         String suffixValue = "";
 
         for (String candidate : subjectCandidates)
         {
-            String candidateSuffixValue = StringUtils.removeStart(restValue, candidate);
-            if ((candidateSuffixValue.length() < restValue.length()) && (candidate.length() > foundValue.length()))
+            String candidateTestSubject =
+                (subjectCapitalizationScheme == CapitalizationScheme.ALWAYS)
+                    || ((subjectCapitalizationScheme == CapitalizationScheme.IF_PREFIXED) && !prefixValue.isEmpty())
+                        ? capitalize(candidate)
+                        : candidate;
+
+            String candidateSuffixValue = StringUtils.removeStart(restValue, candidateTestSubject);
+            if (
+                (candidateSuffixValue.length() < restValue.length()) && (candidateTestSubject.length() > foundValue
+                    .length())
+            )
             {
                 foundValue = candidate;
                 suffixValue = candidateSuffixValue;
@@ -253,7 +255,7 @@ public final class TestPatternMatcher
                     && !sourceParts.getPrefix().isEmpty())
         )
         {
-            newSubject = StringUtils.capitalize(newSubject);
+            newSubject = capitalize(newSubject);
         }
 
         return (sourceParts.getPrefix() + newSubject + sourceParts.getSuffix());
@@ -278,15 +280,10 @@ public final class TestPatternMatcher
 
         if (
             (subjectCapitalizationScheme == CapitalizationScheme.ALWAYS)
-                ||
-                ((subjectCapitalizationScheme == CapitalizationScheme.IF_PREFIXED) && !testParts.getPrefix().isEmpty())
+                || ((subjectCapitalizationScheme == CapitalizationScheme.IF_PREFIXED)
+                    && !testParts.getPrefix().isEmpty())
         )
         {
-            if (Character.isLowerCase(newSubject.charAt(0)))
-            {
-                return null;
-            }
-
             newSubject = uncapitalize(newSubject);
         }
 

@@ -99,6 +99,7 @@ public class TestInsanityConfig
     @Override
     public void reset()
     {
+        form.init();
     }
 
     @Override

@@ -8,7 +8,6 @@ import java.util.Objects;
 
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
-import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher.CapitalizationScheme;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
@@ -240,7 +239,7 @@ public class RenameTestService
         testMethodSiblingMediator =
             new PatternBasedTestMethodSiblingMediator(
                 settings.getTestMethodNamePattern(),
-                CapitalizationScheme.IF_PREFIXED,
+                settings.getTestMethodNameCapitalizationScheme(),
                 settings.getTestAnnotations(),
                 settings.isIncludeInheritedMethods()
             );
