@@ -13,6 +13,7 @@ import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher.Capitali
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
 import com.intellij.psi.util.PsiUtil;
@@ -71,23 +72,23 @@ public class PatternBasedTestClassSiblingMediator
 
         List<PsiClass> matchedClasses = new LinkedList<>();
 
-        String classPackage = PsiUtil.getPackageName(subjectClass);
+        PsiPackage classPackage = JavaPsiFacade.getInstance(project).findPackage(PsiUtil.getPackageName(subjectClass));
 
-        PsiClass[] candidateTestClasses =
-            JavaPsiFacade
-                .getInstance(project)
-                .findPackage(classPackage)
-                .getClasses(searchScope.intersectWith(GlobalSearchScopes.projectTestScope(project)));
-
-        for (PsiClass candidateTestClass : candidateTestClasses)
+        if (classPackage != null)
         {
-            if (
-                testClassPatternMatcher
-                    .findTestMatch(candidateTestClass.getName(), subjectClass.getName())
-                    .isMatched()
-            )
+            PsiClass[] candidateTestClasses =
+                classPackage.getClasses(searchScope.intersectWith(GlobalSearchScopes.projectTestScope(project)));
+
+            for (PsiClass candidateTestClass : candidateTestClasses)
             {
-                matchedClasses.add(candidateTestClass);
+                if (
+                    testClassPatternMatcher
+                        .findTestMatch(candidateTestClass.getName(), subjectClass.getName())
+                        .isMatched()
+                )
+                {
+                    matchedClasses.add(candidateTestClass);
+                }
             }
         }
 
@@ -101,20 +102,22 @@ public class PatternBasedTestClassSiblingMediator
 
         searchScope = searchScope.intersectWith(GlobalSearchScopes.projectProductionScope(project));
 
-        String testClassPackage = PsiUtil.getPackageName(testClass);
+        PsiPackage testClassPackage = JavaPsiFacade.getInstance(project).findPackage(PsiUtil.getPackageName(testClass));
 
-        PsiClass[] subjectCandidateClasses =
-            JavaPsiFacade.getInstance(project).findPackage(testClassPackage).getClasses(searchScope);
-
-        for (PsiClass subjectCandidateClass : subjectCandidateClasses)
+        if (testClassPackage != null)
         {
-            if (
-                testClassPatternMatcher
-                    .findTestMatch(testClass.getName(), subjectCandidateClass.getName())
-                    .isMatched()
-            )
+            PsiClass[] subjectCandidateClasses = testClassPackage.getClasses(searchScope);
+
+            for (PsiClass subjectCandidateClass : subjectCandidateClasses)
             {
-                return subjectCandidateClass;
+                if (
+                    testClassPatternMatcher
+                        .findTestMatch(testClass.getName(), subjectCandidateClass.getName())
+                        .isMatched()
+                )
+                {
+                    return subjectCandidateClass;
+                }
             }
         }
 
