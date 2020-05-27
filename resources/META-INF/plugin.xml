@@ -25,6 +25,11 @@
 
     <change-notes><![CDATA[
       <b>v1.0.3</b><br/>
+      <ul>
+        <li>New test class option: Include interfaces/abstracts</li>
+        <li>Failure to resolve subject/test fix.</li>
+      </ul>
+      <b>v1.0.2</b><br/>
       First public release.
     ]]>
     </change-notes>

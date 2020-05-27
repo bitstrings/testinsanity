@@ -29,12 +29,14 @@ public class PatternBasedTestClassSiblingMediator
 
     private final TestPatternMatcher testClassPatternMatcher;
 
+    private final boolean includeAbstracts;
+
     public PatternBasedTestClassSiblingMediator()
     {
-        this(DEFAULT_TEST_CLASS_NAME_PATTERN);
+        this(DEFAULT_TEST_CLASS_NAME_PATTERN, false);
     }
 
-    public PatternBasedTestClassSiblingMediator(String testClassNamePattern)
+    public PatternBasedTestClassSiblingMediator(String testClassNamePattern, boolean includeAbstracts)
         throws TestPatternException
     {
         this.testClassNamePattern = testClassNamePattern;
@@ -46,6 +48,8 @@ public class PatternBasedTestClassSiblingMediator
                 false,
                 CapitalizationScheme.UNCHANGED
             );
+
+        this.includeAbstracts = includeAbstracts;
     }
 
     public String getTestClassNamePattern()
@@ -82,9 +86,11 @@ public class PatternBasedTestClassSiblingMediator
             for (PsiClass candidateTestClass : candidateTestClasses)
             {
                 if (
-                    testClassPatternMatcher
-                        .findTestMatch(candidateTestClass.getName(), subjectClass.getName())
-                        .isMatched()
+                    (includeAbstracts
+                        || !(candidateTestClass.isInterface() || PsiUtil.isAbstractClass(candidateTestClass)))
+                        && testClassPatternMatcher
+                            .findTestMatch(candidateTestClass.getName(), subjectClass.getName())
+                            .isMatched()
                 )
                 {
                     matchedClasses.add(candidateTestClass);
@@ -145,7 +151,13 @@ public class PatternBasedTestClassSiblingMediator
     }
 
     @Override
-    public boolean isTestClassName(String targetClassName)
+    public boolean isTestClass(PsiClass candidateTestClass)
+    {
+        return (includeAbstracts || !(candidateTestClass.isInterface() || PsiUtil.isAbstractClass(candidateTestClass)))
+            && isTestClassName(candidateTestClass.getName());
+    }
+
+    protected boolean isTestClassName(String targetClassName)
     {
         return testClassPatternMatcher.matchesPattern(targetClassName);
     }

@@ -70,7 +70,9 @@ public class TestInsanityConfig
 
         try
         {
-            new PatternBasedTestClassSiblingMediator(settings.getTestClassPattern()).validatePattern();
+            new PatternBasedTestClassSiblingMediator(
+                settings.getTestClassPattern(), settings.isIncludeInterfacesAbstracts()
+            ).validatePattern();
         }
         catch (TestPatternException e)
         {

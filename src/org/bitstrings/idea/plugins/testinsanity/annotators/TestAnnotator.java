@@ -146,7 +146,7 @@ public class TestAnnotator
                 return;
             }
 
-            if (renameTestService.getTestClassSiblingMediator().isTestClassName(elementClass.getName()))
+            if (renameTestService.getTestClassSiblingMediator().isTestClass(elementClass))
             {
                 PsiClass subjectClass =
                     renameTestService
@@ -182,7 +182,7 @@ public class TestAnnotator
             return;
         }
 
-        if (renameTestService.getTestClassSiblingMediator().isTestClassName(elementClass.getName()))
+        if (renameTestService.getTestClassSiblingMediator().isTestClass(elementClass))
         {
             if (
                 annotationCheckEnabled

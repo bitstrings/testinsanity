@@ -172,7 +172,7 @@ public class RenameTestService
             return renames;
         }
 
-        if (!testClassSiblingMediator.isTestClassName(testClass.getName()))
+        if (!testClassSiblingMediator.isTestClass(testClass))
         {
             Collection<PsiClass> testSubClasseCandidates =
                 ClassInheritorsSearch
@@ -186,7 +186,7 @@ public class RenameTestService
 
             for (PsiClass testSubClassCandidate : testSubClasseCandidates)
             {
-                if (testClassSiblingMediator.isTestClassName(testSubClassCandidate.getName()))
+                if (testClassSiblingMediator.isTestClass(testSubClassCandidate))
                 {
                     testClass = testSubClassCandidate;
                     break;
@@ -194,12 +194,7 @@ public class RenameTestService
             }
         }
 
-        PsiClass subjectClass =
-            testClassSiblingMediator
-                .getSubjectClass(
-                    testClass,
-                    searchScope
-                );
+        PsiClass subjectClass = testClassSiblingMediator.getSubjectClass(testClass, searchScope);
 
         if (subjectClass != null)
         {
@@ -235,7 +230,11 @@ public class RenameTestService
 
     public void update()
     {
-        testClassSiblingMediator = new PatternBasedTestClassSiblingMediator(settings.getTestClassPattern());
+        testClassSiblingMediator =
+            new PatternBasedTestClassSiblingMediator(
+                settings.getTestClassPattern(), settings.isIncludeInterfacesAbstracts()
+            );
+
         testMethodSiblingMediator =
             new PatternBasedTestMethodSiblingMediator(
                 settings.getTestMethodNamePattern(),
@@ -243,8 +242,6 @@ public class RenameTestService
                 settings.getTestAnnotations(),
                 settings.isIncludeInheritedMethods()
             );
-
-
     }
 
     public GlobalSearchScope getSearchScope(PsiElement element, NamedScope scope)

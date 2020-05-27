@@ -61,13 +61,21 @@
                   <text value="${className} = source file name (can appear only once)&#10;(Test|IT) = 'Test' or 'IT'&#10;(Test|) = 'Test' or nothing"/>
                 </properties>
               </component>
-              <hspacer id="f8b60">
+              <component id="6c092" class="javax.swing.JCheckBox" binding="includeInterfacesAbstractsCheckBox" default-binding="true">
                 <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
-              </hspacer>
+                <properties>
+                  <text value="Include interfaces/abstracts"/>
+                </properties>
+              </component>
             </children>
           </grid>
+          <hspacer id="150b3">
+            <constraints>
+              <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+          </hspacer>
         </children>
       </grid>
       <scrollpane id="f45c7">
@@ -267,7 +275,7 @@
                     </constraints>
                     <properties>
                       <selected value="true"/>
-                      <text value="Include Inherited Methods"/>
+                      <text value="Include inherited methods"/>
                     </properties>
                   </component>
                 </children>

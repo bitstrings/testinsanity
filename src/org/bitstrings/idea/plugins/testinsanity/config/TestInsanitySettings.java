@@ -61,6 +61,8 @@ public class TestInsanitySettings
 
     public boolean includeInheritedMethods;
 
+    public boolean includeInterfacesAbstracts;
+
     public TestInsanitySettings()
     {
         setTestkAnnotation(TestAnnotation.JUNIT4, true);
@@ -74,6 +76,7 @@ public class TestInsanitySettings
         setRenamingDialogEnabled(true);
         setGutterAnnotationEnabled(true);
         setIncludeInheritedMethods(true);
+        setIncludeInterfacesAbstracts(false);
     }
 
     public static TestInsanitySettings getInstance(Project project)
@@ -201,5 +204,15 @@ public class TestInsanitySettings
     public boolean isIncludeInheritedMethods()
     {
         return includeInheritedMethods;
+    }
+
+    public void setIncludeInterfacesAbstracts(boolean includeInterfacesAbstracts)
+    {
+        this.includeInterfacesAbstracts = includeInterfacesAbstracts;
+    }
+
+    public boolean isIncludeInterfacesAbstracts()
+    {
+        return includeInterfacesAbstracts;
     }
 }

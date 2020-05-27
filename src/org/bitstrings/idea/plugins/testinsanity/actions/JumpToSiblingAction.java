@@ -96,12 +96,10 @@ public class JumpToSiblingAction
                 return null;
             }
 
-            String elementClassName = elementClass.getName();
-
             List<PsiMethod> gotoMethods = null;
             List<PsiClass> gotoClasses;
 
-            if (renameTestService.getTestClassSiblingMediator().isTestClassName(elementClassName))
+            if (renameTestService.getTestClassSiblingMediator().isTestClass(elementClass))
             {
                 PsiClass gotoClass =
                     renameTestService
@@ -217,7 +215,7 @@ public class JumpToSiblingAction
 
         RenameTestService renameTestService = RenameTestService.getInstance(project);
 
-        if (renameTestService.getTestClassSiblingMediator().isTestClassName(elementClass.getName()))
+        if (renameTestService.getTestClassSiblingMediator().isTestClass(elementClass))
         {
             presentation.setText("_Jump to Subject", true);
         }
