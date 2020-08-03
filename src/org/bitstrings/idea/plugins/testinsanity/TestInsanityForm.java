@@ -40,7 +40,7 @@ public class TestInsanityForm
     private JButton testMethodPresetSelectButton;
     private JCheckBox enableRefactoringSupportCheckBox;
     private JCheckBox enableNavigationCheckBox;
-    private JTextPane itIsRecommendedToTextPane;
+    private JTextPane recommendedToAvoidFalseTextPane;
     private JCheckBox showGutterAnnotationCheckBox;
     private JCheckBox showRenamingDialogCheckBox;
     private JCheckBox includeInheritedMethodsCheckBox;
@@ -83,9 +83,8 @@ public class TestInsanityForm
         testMethodPresetPreviewPane.setText(presetPreviewPaneTexts.get(0));
 
         testMethodPresetCombo.addActionListener(
-            event ->
-                testMethodPresetPreviewPane
-                    .setText(presetPreviewPaneTexts.get(((JComboBox<?>) event.getSource()).getSelectedIndex()))
+            event -> testMethodPresetPreviewPane
+                .setText(presetPreviewPaneTexts.get(((JComboBox<?>) event.getSource()).getSelectedIndex()))
         );
 
         testMethodPresetSelectButton.addActionListener(
@@ -130,17 +129,11 @@ public class TestInsanityForm
     public void apply()
     {
         settings
-            .setTestkAnnotation(
-                TestAnnotation.JUNIT4, testAnnotationJunit4CheckBox.isSelected()
-            );
+            .setTestkAnnotation(TestAnnotation.JUNIT4, testAnnotationJunit4CheckBox.isSelected());
         settings
-            .setTestkAnnotation(
-                TestAnnotation.JUNIT5, testAnnotationJunit5CheckBox.isSelected()
-            );
+            .setTestkAnnotation(TestAnnotation.JUNIT5, testAnnotationJunit5CheckBox.isSelected());
         settings
-            .setTestkAnnotation(
-                TestAnnotation.TESTNG, testAnnotationTestNgCheckBox.isSelected()
-            );
+            .setTestkAnnotation(TestAnnotation.TESTNG, testAnnotationTestNgCheckBox.isSelected());
 
         settings.setTestClassPattern(testClassPatternTextField.getText());
 

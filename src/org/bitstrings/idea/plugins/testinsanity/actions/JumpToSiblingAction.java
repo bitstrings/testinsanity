@@ -47,6 +47,7 @@ public class JumpToSiblingAction
         {
             return null;
         }
+
         @Override
         protected GotoData getSourceAndTargetElements(Editor editor, PsiFile file)
         {
