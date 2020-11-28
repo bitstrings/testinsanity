@@ -174,6 +174,10 @@
                           <minimumSize width="-1" height="-1"/>
                           <text value="&lt;html&gt;&#10;  &lt;head&gt;&#10;    &#10;  &lt;/head&gt;&#10;  &lt;body&gt;&#10;    &lt;pre&gt;  &lt;font size=&quot;-2&quot;&gt;TestClass:&lt;/font&gt;&#10;&lt;code&gt;    &lt;i&gt;@Test&lt;/i&gt;&#10;    void &lt;b&gt;isDarkColor_colorIsBlack_true&lt;/b&gt;() {}&lt;/code&gt;&#10;&#10;    &lt;b&gt;&amp;lt;--  Match  --&amp;gt;&lt;/b&gt;&#10;&#10;  &lt;font size=&quot;-2&quot;&gt;SubjectClass:&lt;/font&gt;&#10;&lt;code&gt;    boolean &lt;b&gt;isDarkColor&lt;/b&gt;() {}&lt;/code&gt;&lt;/pre&gt;&#10;  &lt;/body&gt;&#10;&lt;/html&gt;&#10;"/>
                         </properties>
+                        <clientProperties>
+                          <JEditorPane.honorDisplayProperties class="java.lang.Boolean" value="true"/>
+                          <JEditorPane.w3cLengthUnits class="java.lang.Boolean" value="false"/>
+                        </clientProperties>
                       </component>
                     </children>
                   </scrollpane>

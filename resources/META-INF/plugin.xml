@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>org.bitstrings.idea.plugins.TestInsanity</id>
     <name>TestInsanity</name>
-    <version>1.0.4</version>
+    <version>1.0.5</version>
     <vendor email="pino.silvaggio@gmail.com" url="https://github.com/bitstrings/testinsanity">bitstrings.org</vendor>
 
     <description><![CDATA[
@@ -24,15 +24,20 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      <b>v1.0.5</b><br/>
+      <ul>
+        <li>Render presets preview using inherited style.</li>
+      </ul>
+      <br/>
       <b>v1.0.4</b><br/>
       <ul>
-        <li>Correct some texts</li>
+        <li>Correct some texts.</li>
       </ul>
       <br/>
       <b>v1.0.3</b><br/>
       <ul>
-        <li>New test class option: Include interfaces/abstracts</li>
-        <li>Failure to resolve subject/test fix.</li>
+        <li>New test class option: Include interfaces/abstracts.</li>
+        <li>Failure to resolve subject/test.</li>
       </ul>
       <br/>
       <b>v1.0.2</b><br/>
