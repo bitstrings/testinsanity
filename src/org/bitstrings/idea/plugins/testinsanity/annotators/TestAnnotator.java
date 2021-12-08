@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction;
 
 import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
-import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -43,10 +42,14 @@ public class TestAnnotator
 {
     private static final int MAX_FQN_LENGTH = 72;
 
-    private static final Icon GUTTER_CLASS_ICON = IconLoader.getIcon("/icons/gutter_class_icon.svg");
-    private static final Icon GUTTER_CLASS_ORPHAN_ICON = IconLoader.getIcon("/icons/gutter_class_orphan_icon.svg");
-    private static final Icon GUTTER_METHOD_ICON = IconLoader.getIcon("/icons/gutter_icon.svg");
-    private static final Icon GUTTER_METHOD_ORPHAN_ICON = IconLoader.getIcon("/icons/gutter_orphan_icon.svg");
+    private static final Icon GUTTER_CLASS_ICON =
+        IconLoader.getIcon("/icons/gutter_class_icon.svg", TestAnnotator.class);
+    private static final Icon GUTTER_CLASS_ORPHAN_ICON =
+        IconLoader.getIcon("/icons/gutter_class_orphan_icon.svg", TestAnnotator.class);
+    private static final Icon GUTTER_METHOD_ICON =
+        IconLoader.getIcon("/icons/gutter_icon.svg", TestAnnotator.class);
+    private static final Icon GUTTER_METHOD_ORPHAN_ICON =
+        IconLoader.getIcon("/icons/gutter_orphan_icon.svg", TestAnnotator.class);
 
     private static final String NOT_LINKED_TO_SUBJECT_MESSAGE = "Missing Test Subject Method";
     private static final String NO_SUBJECT_CLASS_MESSAGE = "Missing Test Subject Class";
@@ -337,10 +340,12 @@ public class TestAnnotator
         AnnotationHolder annotationHolder, PsiNamedElement element, String message, GutterIconRenderer iconRenderer
     )
     {
-        Annotation annotation =
-            annotationHolder.createAnnotation(HighlightSeverity.INFORMATION, element.getTextRange(), message);
-        annotation.setGutterIconRenderer(iconRenderer);
-        annotation.setNeedsUpdateOnTyping(true);
+        annotationHolder
+            .newAnnotation(HighlightSeverity.INFORMATION, message)
+            .range(element.getTextRange())
+            .gutterIconRenderer(iconRenderer)
+            .needsUpdateOnTyping(true)
+            .create();
     }
 
     private String getAbbreviatedText(String text, int maxLength)

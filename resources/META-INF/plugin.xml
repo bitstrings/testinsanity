@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>org.bitstrings.idea.plugins.TestInsanity</id>
     <name>TestInsanity</name>
-    <version>1.0.5</version>
+    <version>1.0.6</version>
     <vendor email="pino.silvaggio@gmail.com" url="https://github.com/bitstrings/testinsanity">bitstrings.org</vendor>
 
     <description><![CDATA[
@@ -24,6 +24,12 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      <b>v1.0.6</b><br/>
+      <ul>
+        <li>Don't use deprecated API.</li>
+        <li>Support idea version 201+ only.</li>
+      </ul>
+      <br/>
       <b>v1.0.5</b><br/>
       <ul>
         <li>Render presets preview using inherited style.</li>
@@ -45,7 +51,7 @@
     ]]>
     </change-notes>
 
-    <idea-version since-build="192"/>
+    <idea-version since-build="201"/>
 
     <depends>org.jetbrains.kotlin</depends>
     <depends>com.intellij.modules.java</depends>

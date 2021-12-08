@@ -12,9 +12,9 @@ import com.intellij.openapi.util.IconLoader;
 public class TestInsanityEnablerAction
     extends AnAction
 {
-    private static final Icon ON = IconLoader.getIcon("/icons/menu_on_icon.svg");
+    private static final Icon ON = IconLoader.getIcon("/icons/menu_on_icon.svg", TestInsanityEnablerAction.class);
     private static final Icon ON_SELECTED = ON;
-    private static final Icon OFF = IconLoader.getIcon("/icons/menu_off_icon.svg");
+    private static final Icon OFF = IconLoader.getIcon("/icons/menu_off_icon.svg", TestInsanityEnablerAction.class);
 
     @Override
     public void actionPerformed(AnActionEvent event)
