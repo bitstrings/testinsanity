@@ -21,6 +21,10 @@ public final class TestPatternMatcher
 
     private static final Pattern VALID_CHARS = Pattern.compile("[^\\w_\\$\\+\\*\\(\\)\\|]", Pattern.CASE_INSENSITIVE);
 
+    private static final String[] WILDCARDS = new String[] { "*", "+" };
+
+    private static final String[] WILDCARDS_REGEX = new String[] { ".*?", ".+?" };
+
     private final String pattern;
 
     private final String subjectToken;
@@ -133,10 +137,7 @@ public final class TestPatternMatcher
     {
         return
             StringUtils.replaceEach(
-                AFFIX_REGEX_PATTERN.matcher(pattern).replaceAll("\\\\Q$1\\\\E$2"),
-                new String[] { "*", "+" },
-                new String[] { ".*?", ".+?" }
-            );
+                AFFIX_REGEX_PATTERN.matcher(pattern).replaceAll("\\\\Q$1\\\\E$2"), WILDCARDS, WILDCARDS_REGEX);
     }
 
     public void validatePattern()

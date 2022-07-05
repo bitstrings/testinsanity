@@ -8,8 +8,8 @@ import org.bitstrings.idea.plugins.testinsanity.PatternBasedTestClassSiblingMedi
 import org.bitstrings.idea.plugins.testinsanity.PatternBasedTestMethodSiblingMediator;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher.CapitalizationScheme;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -82,8 +82,8 @@ public class TestInsanitySettings
     public static TestInsanitySettings getInstance(Project project)
     {
         return project == null
-            ? ServiceManager.getService(TestInsanitySettings.class)
-            : ServiceManager.getService(project, TestInsanitySettings.class);
+            ? ApplicationManager.getApplication().getService(TestInsanitySettings.class)
+            : project.getService(TestInsanitySettings.class);
     }
 
     @Override

@@ -9,7 +9,6 @@ import java.util.Objects;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -28,8 +27,6 @@ public class RenameTestService
 
     private TestMethodSiblingMediator testMethodSiblingMediator;
 
-    private final Project project;
-
     private final TestInsanitySettings settings;
 
     public RenameTestService(Project project)
@@ -46,8 +43,6 @@ public class RenameTestService
         TestMethodSiblingMediator testMethodSiblingMediator
     )
     {
-        this.project = project;
-
         this.testClassSiblingMediator = testClassSiblingMediator;
         this.testMethodSiblingMediator = testMethodSiblingMediator;
 
@@ -56,7 +51,7 @@ public class RenameTestService
 
     public static RenameTestService getInstance(Project project)
     {
-        return ServiceManager.getService(project, RenameTestService.class);
+        return project.getService(RenameTestService.class);
     }
 
     public TestClassSiblingMediator getTestClassSiblingMediator()
