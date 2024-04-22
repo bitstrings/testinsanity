@@ -30,7 +30,7 @@ public class TestInsanitySettings
         ),
         TESTNG("org.testng.annotations.Test");
 
-        private Set<String> annotationsFqns;
+        private final Set<String> annotationsFqns;
 
         TestAnnotation(String... annotationsFqns)
         {

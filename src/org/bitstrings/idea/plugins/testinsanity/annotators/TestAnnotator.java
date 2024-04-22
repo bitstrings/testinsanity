@@ -22,12 +22,16 @@ import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
+import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -262,9 +266,9 @@ public class TestAnnotator
         {
             String subjectClassPres = ClassPresentationUtil.getNameForClass(subjectClass, true);
 
-            message = "Subject Class [ " + subjectClassPres + " ]";
-            tooltip = "Subject Class [ <a href=\"#javaClass/" + subjectClassPres + "\">"
-                + getAbbreviatedText(subjectClassPres, MAX_FQN_LENGTH) + "</a> ]";
+            message = "Subject Class " + subjectClassPres;
+            tooltip = "Subject Class <a href=\"#javaClass/" + subjectClassPres + "\">"
+                + getAbbreviatedText(subjectClassPres, MAX_FQN_LENGTH) + "</a>";
             iconRenderer = new TestMatchGutterIconRenderer(message, message, GUTTER_CLASS_ICON, testClass, tooltip);
         }
         else
@@ -287,7 +291,19 @@ public class TestAnnotator
         String tooltip;
         GutterIconRenderer iconRenderer;
 
-        if (!siblingClasses.isEmpty())
+        if (siblingClasses.isEmpty())
+        {
+            if (ignoreMissing)
+            {
+                return;
+            }
+
+            message = NO_SUBJECT_CLASS_MESSAGE;
+            iconRenderer =
+                new TestMatchGutterIconRenderer(
+                    message, message, GUTTER_METHOD_ORPHAN_ICON, method, NO_SUBJECT_CLASS_MESSAGE);
+        }
+        else
         {
             if (siblingMethods.isEmpty())
             {
@@ -306,31 +322,42 @@ public class TestAnnotator
                 String siblingtMethodNamePres = siblingMethods.get(0).getName();
                 String siblingMethodPres =
                     getAbbreviatedText(siblingMethodClassPres + "." + siblingtMethodNamePres, MAX_FQN_LENGTH);
+                PsiAnnotation siblingMethodDisplayNameAnnotation =
+                    siblingMethods.get(0).getAnnotation("org.junit.jupiter.api.DisplayName");
 
                 message =
                     foundMessageIdentifier
-                        + " Method [ " + siblingMethodPres + " ] (" + siblingMethods.size() + " Found)";
+                        + "Method " + siblingMethodPres + " (" + siblingMethods.size() + " Found)";
                 tooltip =
                     foundMessageIdentifier
-                        + " Method [ <a href=\"#javaClass/" + siblingMethodClassPres + "\">"
-                        + siblingMethodPres
-                        + "</a> ]"
+                        + "Method <a href=\"#javaClass/" + siblingMethodClassPres + "\">" + siblingMethodPres + "</a>"
                         + " (" + siblingMethods.size() + " Found)";
+
+                if (siblingMethodDisplayNameAnnotation != null)
+                {
+                    List<JvmAnnotationAttribute> attributes = siblingMethodDisplayNameAnnotation.getAttributes();
+
+                    if (!attributes.isEmpty())
+                    {
+                        JvmAnnotationAttributeValue attrValue = attributes.get(0).getAttributeValue();
+
+                        if (attrValue instanceof JvmAnnotationConstantValue)
+                        {
+                            message +=
+                                "<br/>"
+                                    + "Display Name "
+                                    +((JvmAnnotationConstantValue) attrValue).getConstantValue();
+                            tooltip +=
+                                "<br/>"
+                                    + "Display Name <a href=\"#javaClass/" + siblingMethodClassPres + "\">"
+                                    + ((JvmAnnotationConstantValue) attrValue).getConstantValue()
+                                    + "</a>";
+                        }
+                    }
+                }
 
                 iconRenderer = new TestMatchGutterIconRenderer(message, message, GUTTER_METHOD_ICON, method, tooltip);
             }
-        }
-        else
-        {
-            if (ignoreMissing)
-            {
-                return;
-            }
-
-            message = NO_SUBJECT_CLASS_MESSAGE;
-            iconRenderer =
-                new TestMatchGutterIconRenderer(
-                    message, message, GUTTER_METHOD_ORPHAN_ICON, method, NO_SUBJECT_CLASS_MESSAGE);
         }
 
         createAnnotation(annotationHolder, method, message, iconRenderer);

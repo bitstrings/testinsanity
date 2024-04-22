@@ -4,7 +4,9 @@ import javax.swing.Icon;
 
 import org.bitstrings.idea.plugins.testinsanity.TestInsanityBundle;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.jetbrains.annotations.NotNull;
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.IconLoader;
@@ -37,5 +39,11 @@ public class TestInsanityEnablerAction
         event.getPresentation().setIcon(refactoringEnabled ? ON : OFF);
         event.getPresentation().setSelectedIcon(refactoringEnabled ? ON_SELECTED : OFF);
         event.getPresentation().setText(TestInsanityBundle.message("testinsanity.action.enabler.title"));
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread()
+    {
+        return ActionUpdateThread.EDT;
     }
 }

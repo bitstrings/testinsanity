@@ -45,7 +45,7 @@ public class JumpToSiblingAction
         @Override
         protected String getNotFoundMessage(Project project, Editor editor, PsiFile file)
         {
-            return null;
+            return "File " + file.getName() + "not found.";
         }
 
         @Override

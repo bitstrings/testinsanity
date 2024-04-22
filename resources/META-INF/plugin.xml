@@ -1,7 +1,7 @@
 <idea-plugin require-restart="true">
     <id>org.bitstrings.idea.plugins.TestInsanity</id>
     <name>TestInsanity</name>
-    <version>1.0.8</version>
+    <version>1.2.0</version>
     <vendor email="pino.silvaggio@gmail.com" url="https://github.com/bitstrings/testinsanity">bitstrings.org</vendor>
 
     <description><![CDATA[
@@ -24,6 +24,17 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      <b>v1.2.0</b><br/>
+      <ul>
+        <li>2024.1+</li>
+      </ul>
+      <br/>
+      <b>v1.0.9</b><br/>
+      <ul>
+        <li>Small code cleanup.</li>
+        <li>Some icons changes.</li>
+      </ul>
+      <br/>
       <b>v1.0.8</b><br/>
       <ul>
         <li>Small code cleanup.</li>
@@ -63,7 +74,7 @@
     ]]>
     </change-notes>
 
-    <idea-version since-build="201"/>
+    <idea-version since-build="241"/>
 
     <depends>org.jetbrains.kotlin</depends>
     <depends>com.intellij.modules.java</depends>
