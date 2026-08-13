@@ -1,5 +1,6 @@
 package org.bitstrings.idea.plugins.testinsanity;
 
+import java.text.MessageFormat;
 import java.util.ResourceBundle;
 
 import org.jetbrains.annotations.NonNls;
@@ -21,6 +22,11 @@ public class TestInsanityBundle
     public static String message(String key)
     {
         return INSTANCE.resourceBundle.getString(key);
+    }
+
+    public static String message(String key, Object... params)
+    {
+        return MessageFormat.format(INSTANCE.resourceBundle.getString(key), params);
     }
 
     public static boolean containsKey(String key)

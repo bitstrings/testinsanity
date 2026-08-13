@@ -1,0 +1,15 @@
+<html>
+<body>
+Creates the test sibling that the configured TestInsanity naming scheme expects but that does not exist yet:
+the test class for the subject class, or the test method for the subject method.
+<p>
+    The name is generated from the test class and test method patterns configured in
+    Settings -&gt; Tools -&gt; TestInsanity. The test class is created in the first test source root of the module,
+    under the package of the subject class. The test method is annotated with the first enabled test framework
+    annotation that resolves in the test module.
+</p>
+<p>
+    Available on a subject class or a subject method in Java sources only, and only while the sibling is missing.
+</p>
+</body>
+</html>
