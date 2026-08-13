@@ -29,7 +29,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.serviceContainer.NonInjectable;
 
-public class RenameTestService
+public final class RenameTestService
 {
     private static final class Mediators
     {

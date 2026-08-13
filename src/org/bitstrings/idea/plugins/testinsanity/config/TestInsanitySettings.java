@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
 @State(name = "TestInsanitySettings", storages = @Storage("TestInsanity.xml"))
-public class TestInsanitySettings
+public final class TestInsanitySettings
     implements PersistentStateComponent<TestInsanitySettings>
 {
     public enum TestAnnotation

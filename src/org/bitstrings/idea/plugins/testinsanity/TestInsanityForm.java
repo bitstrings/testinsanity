@@ -20,7 +20,7 @@ import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher.Capitali
 
 import com.intellij.ui.IdeBorderFactory;
 
-public class TestInsanityForm
+public final class TestInsanityForm
 {
     private static final char PATTERN_SEPARATOR = ';';
 
