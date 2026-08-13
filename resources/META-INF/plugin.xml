@@ -124,6 +124,8 @@
             implementation="org.bitstrings.idea.plugins.testinsanity.TestClassAutomaticRenamerFactory"/>
         <automaticRenamerFactory
             implementation="org.bitstrings.idea.plugins.testinsanity.TestMethodAutomaticRenamerFactory"/>
+        <refactoring.elementListenerProvider
+            implementation="org.bitstrings.idea.plugins.testinsanity.TestDisplayNameListenerProvider"/>
         <testFinder implementation="org.bitstrings.idea.plugins.testinsanity.navigation.TestInsanityTestFinder"/>
         <codeInsight.lineMarkerProvider
             language="JVM"
