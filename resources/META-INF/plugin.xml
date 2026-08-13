@@ -1,21 +1,49 @@
 <idea-plugin require-restart="true">
     <id>org.bitstrings.idea.plugins.TestInsanity</id>
     <name>TestInsanity</name>
-    <version>1.3.0</version>
+    <version>2.0.0</version>
     <vendor email="pino.silvaggio@gmail.com" url="https://github.com/bitstrings/testinsanity">bitstrings.org</vendor>
 
     <description><![CDATA[
-      Automatic renaming of tests methods and classes.<br/>
+      <b>Keep tests and the code they test in sync.</b><br/>
       <br/>
+      Rename a subject and its tests follow. Rename a test and its subject follows. Jump between the
+      two, and see in the gutter which methods have a test and which do not.<br/>
+      <br/>
+      TestInsanity reads your convention from a pattern instead of guessing at it:<br/>
+      <br/>
+      <code>&nbsp;&nbsp;${className}Test</code> &nbsp; maps <code>Color</code> to <code>ColorTest</code><br/>
+      <code>&nbsp;&nbsp;(test|)${subjectName}*</code> &nbsp; maps <code>isDarkColor()</code> to
+      <code>testIsDarkColor_whenBlack()</code><br/>
+      <br/>
+      Several patterns can be active at once, separated by <code>;</code>, so <code>${className}Test</code>,
+      <code>${className}IT</code> and <code>${className}Spec</code> coexist in one project.<br/>
+      <br/>
+      <b>What it does</b>
       <ul>
-        <li>Pattern based renaming</>
-        <li>Test frameworks annotations aware</li>
-        <li>Gutter annotation icon</li>
-        <li>Navigation Go To -> Jump to Sibling (default shortcut: CTRL+ALT+`)</li>
-        <li>Menu/Toolbar refactoring support toggle</li>
-        <li>Per Project settings</li>
-        <li>Kotlin Support</li>
+        <li><b>Renaming, both ways</b> &mdash; subject class to test classes, test class to subject,
+            subject method to test methods, test method to subject. Proposed renames appear in the
+            standard Rename related items dialog, so you can deselect any of them.</li>
+        <li><b>Navigation</b> &mdash; Go To -&gt; Jump to Sibling (CTRL+ALT+`) moves between a method
+            and its test method, not only between their classes. Navigate -&gt; Test (CTRL+SHIFT+T)
+            and Create Test follow the same scheme.</li>
+        <li><b>Gutter icons</b> &mdash; the sibling class or method, its JUnit 5 DisplayName when it
+            has one, and a distinct icon for a test with no subject.</li>
+        <li><b>Create what is missing</b> &mdash; Alt+Enter on a subject creates the test class in the
+            module test source root, or the test method carrying the right framework annotation
+            (Java sources).</li>
       </ul>
+      <b>Built for real projects</b>
+      <ul>
+        <li>JUnit 4, JUnit 5 &mdash; including nested and parameterized tests &mdash; and TestNG</li>
+        <li>Java and Kotlin; Kotlin support is optional, and the plugin works without it</li>
+        <li>Kotlin backtick test names, since patterns accept spaces</li>
+        <li>Tests in a module of their own, resolved in both directions</li>
+        <li>Abstract or inherited test classes</li>
+      </ul>
+      Everything is configured per project under <b>Settings -&gt; Tools -&gt; TestInsanity</b>.
+      Refactoring support toggles from the Tools menu, gutter icons from
+      <b>Settings -&gt; Editor -&gt; General -&gt; Gutter Icons</b>.<br/>
       <br/>
       Please report issues:<br/>
       <a href="https://github.com/bitstrings/testinsanity/issues">https://github.com/bitstrings/testinsanity/issues</a><br/>
@@ -24,6 +52,41 @@
     ]]></description>
 
     <change-notes><![CDATA[
+      <b>v2.0.0</b><br/>
+      <br/>
+      <b>New</b><br/>
+      <ul>
+        <li>Renaming works in all four directions: subject class to test classes, test class to subject class,
+            subject method to test methods, and test method to subject method.</li>
+        <li>Renaming goes through the standard Rename related items dialog, so it also applies to in-place
+            rename and lets you deselect any proposed rename.</li>
+        <li>Several alternative patterns per project, separated by ; and tried in order, so Test, Tests, IT and
+            Spec can coexist.</li>
+        <li>Navigate -> Test (CTRL+SHIFT+T) and Create Test follow the configured naming scheme.</li>
+        <li>New intention (Alt+Enter): create the missing test class or test method for the subject.</li>
+        <li>JUnit 5 nested test classes are matched.</li>
+        <li>Patterns accept spaces, for Kotlin backtick test names, with a matching preset.</li>
+        <li>Optional @DisplayName generation and rename synchronization.</li>
+        <li>Gutter icons are computed off the highlighting pass and cached, appear in every JVM language, and
+            can be switched off in Settings -> Editor -> General -> Gutter Icons.</li>
+      </ul>
+      <b>Fixed</b><br/>
+      <ul>
+        <li>Renaming a subject class did not rename its test classes.</li>
+        <li>Renaming a test class or a test method did not rename its subject.</li>
+        <li>A test living in its own module never resolved its subject.</li>
+        <li>Which sibling was picked followed index order and could differ between runs.</li>
+        <li>A test method was counted twice when two matching test classes were related by inheritance.</li>
+        <li>A nested helper class inside a test class was reported as a test of the outer subject.</li>
+        <li>The settings Apply button ignored changes to the renaming checkbox.</li>
+        <li>A damaged TestInsanity.xml could leave the plugin inert.</li>
+      </ul>
+      <b>Changed</b><br/>
+      <ul>
+        <li>Show renaming dialog is now Pre-select test renames: the dialog is the platform Rename related
+            items dialog, and this setting decides whether the proposed renames start checked.</li>
+      </ul>
+      <br/>
       <b>v1.3.0</b><br/>
       <ul>
         <li>2026.1+</li>
