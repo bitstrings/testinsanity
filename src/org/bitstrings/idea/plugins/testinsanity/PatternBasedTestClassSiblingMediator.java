@@ -1,10 +1,13 @@
 package org.bitstrings.idea.plugins.testinsanity;
 
+import static java.util.Arrays.asList;
 import static org.apache.commons.lang3.StringUtils.substringBetween;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternException;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatchResult;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher;
@@ -24,6 +27,7 @@ public class PatternBasedTestClassSiblingMediator
     public static final String DEFAULT_TEST_CLASS_NAME_TOKEN = "${className}";
 
     public static final String DEFAULT_TEST_CLASS_NAME_PATTERN = DEFAULT_TEST_CLASS_NAME_TOKEN + "Test";
+
 
     private final String testClassNamePattern;
 
@@ -80,8 +84,9 @@ public class PatternBasedTestClassSiblingMediator
 
         if (classPackage != null)
         {
-            PsiClass[] candidateTestClasses =
-                classPackage.getClasses(searchScope.intersectWith(GlobalSearchScopes.projectTestScope(project)));
+            List<PsiClass> candidateTestClasses =
+                inStableOrder(
+                    classPackage.getClasses(searchScope.intersectWith(GlobalSearchScopes.projectTestScope(project))));
 
             for (PsiClass candidateTestClass : candidateTestClasses)
             {
@@ -112,7 +117,7 @@ public class PatternBasedTestClassSiblingMediator
 
         if (testClassPackage != null)
         {
-            PsiClass[] subjectCandidateClasses = testClassPackage.getClasses(searchScope);
+            List<PsiClass> subjectCandidateClasses = inStableOrder(testClassPackage.getClasses(searchScope));
 
             for (PsiClass subjectCandidateClass : subjectCandidateClasses)
             {
@@ -157,8 +162,44 @@ public class PatternBasedTestClassSiblingMediator
             && isTestClassName(candidateTestClass.getName());
     }
 
+    @Override
+    public boolean matchesTestName(String testName, String subjectName)
+    {
+        return testClassPatternMatcher.findTestMatch(testName, subjectName).isMatched();
+    }
+
+    @Override
+    public PsiClass resolveTestClass(PsiClass candidateClass)
+    {
+        for (PsiClass enclosingClass = candidateClass; enclosingClass != null;
+            enclosingClass = enclosingClass.getContainingClass())
+        {
+            if (isTestClass(enclosingClass))
+            {
+                return enclosingClass;
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public String generateTestName(String subjectName)
+    {
+        return testClassPatternMatcher.generateTestName(subjectName);
+    }
+
     protected boolean isTestClassName(String targetClassName)
     {
-        return testClassPatternMatcher.matchesPattern(targetClassName);
+        return (targetClassName != null) && testClassPatternMatcher.matchesPattern(targetClassName);
+    }
+
+    private static List<PsiClass> inStableOrder(PsiClass[] classes)
+    {
+        List<PsiClass> ordered = new ArrayList<>(asList(classes));
+
+        ordered.sort(TestInsanityUtil.STABLE_CLASS_ORDER);
+
+        return ordered;
     }
 }

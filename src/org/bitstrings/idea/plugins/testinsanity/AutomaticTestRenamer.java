@@ -1,89 +1,74 @@
-/*
- *=============================================================================
- *                      THIS FILE AND ITS CONTENTS ARE THE
- *                    EXCLUSIVE AND CONFIDENTIAL PROPERTY OF
- *
- *                          EXPRETIO TECHNOLOGIES, INC.
- *
- * Any unauthorized use of this file or any of its parts, including, but not
- * limited to, viewing, editing, copying, compiling, and distributing, is
- * strictly prohibited.
- *
- * Copyright ExPretio Technologies, Inc., 2020. All rights reserved.
- *=============================================================================
- */
 package org.bitstrings.idea.plugins.testinsanity;
 
-import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
+import com.intellij.refactoring.rename.naming.NameSuggester;
 
 class AutomaticTestRenamer
     extends AutomaticRenamer
 {
-    public AutomaticTestRenamer()
+    private final Map<PsiNamedElement, String> requestedNames = new LinkedHashMap<>();
+
+    private final TestRenameKind renameKind;
+
+    private final boolean selectedByDefault;
+
+    AutomaticTestRenamer(TestRenameKind renameKind, boolean selectedByDefault)
     {
+        this.renameKind = renameKind;
+        this.selectedByDefault = selectedByDefault;
     }
 
-    public AutomaticTestRenamer(PsiNamedElement element, String newName)
+    void addElement(PsiNamedElement element, String newName)
     {
-        PsiMethod elementMethod = TestElementAdapters.asMethod(element);
-
-        if (elementMethod == null)
+        if (element.getName() == null)
         {
             return;
         }
 
-        Project project = element.getProject();
+        requestedNames.put(element, newName);
 
-        RenameTestService.getInstance(project)
-            .renameSubjectMethodMapping(
-                elementMethod, newName, GlobalSearchScope.projectScope(project))
-            .forEach(
-                (rename, renameNewName) ->
-                {
-                    if (!PsiEquivalenceUtil.areElementsEquivalent(rename, elementMethod))
-                    {
-                        myElements.add((PsiMethod) rename);
-                        suggestAllNames(((PsiMethod) rename).getName(), renameNewName);
-                    }
-                }
-            );
+        myElements.add(element);
+
+        suggestAllNames(element.getName(), newName);
     }
 
-    public void addElement(PsiNamedElement element, String newName)
+    @Override
+    protected String suggestNameForElement(
+        PsiNamedElement element, NameSuggester suggester, String newClassName, String oldClassName
+    )
     {
-        myElements.add(element);
-        suggestAllNames(element.getName(), newName);
+        String requestedName = requestedNames.get(element);
+
+        return (requestedName == null)
+            ? getPresentationName(element)
+            : requestedName;
     }
 
     @Override
     public boolean isSelectedByDefault()
     {
-        return true;
+        return selectedByDefault;
     }
 
     @Override
     public String getDialogTitle()
     {
-        return TestInsanityBundle.message("testinsanity.renamer.dialog.title");
+        return renameKind.message("dialog.title");
     }
 
     @Override
     public String getDialogDescription()
     {
-        return TestInsanityBundle.message("testinsanity.renamer.dialog.description");
+        return renameKind.message("dialog.description");
     }
 
     @Override
     public String entityName()
     {
-        return TestInsanityBundle.message("testinsanity.renamer.dialog.entityname");
+        return renameKind.message("dialog.entityname");
     }
-
 }

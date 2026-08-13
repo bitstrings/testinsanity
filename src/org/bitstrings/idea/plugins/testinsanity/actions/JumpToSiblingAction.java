@@ -20,16 +20,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.search.scope.ProjectProductionScope;
-import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.serviceContainer.NonInjectable;
 
 public class JumpToSiblingAction
     extends BaseCodeInsightAction
 {
-    private final PsiElement element;
-
     protected class MyGotoTargetHandler
         extends GotoTargetHandler
     {
@@ -48,25 +43,20 @@ public class JumpToSiblingAction
         @Override
         protected GotoData getSourceAndTargetElements(Editor editor, PsiFile file)
         {
-            Project project = file.getProject();
-
-            PsiElement element =
-                JumpToSiblingAction.this.element == null
-                    ? file.findElementAt(editor.getCaretModel().getOffset())
-                    : JumpToSiblingAction.this.element;
+            PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
 
             if (element == null)
             {
                 return null;
             }
 
-            RenameTestService renameTestService = RenameTestService.getInstance(project);
+            RenameTestService renameTestService = RenameTestService.getInstance(file.getProject());
 
             PsiMethod elementMethod =
                 TestElementAdapters.asMethod(PsiTreeUtil.findFirstParent(element, TestElementAdapters::isMethod));
 
             PsiClass elementClass =
-                elementMethod == null
+                (elementMethod == null)
                     ? TestElementAdapters.asClass(
                         PsiTreeUtil.findFirstParent(element, TestElementAdapters::isClass),
                         element.getResolveScope()
@@ -78,18 +68,32 @@ public class JumpToSiblingAction
                 return null;
             }
 
+            PsiClass testClass = renameTestService.getTestClassSiblingMediator().resolveTestClass(elementClass);
+
             List<PsiMethod> gotoMethods = null;
             List<PsiClass> gotoClasses;
 
-            if (renameTestService.getTestClassSiblingMediator().isTestClass(elementClass))
+            if (testClass == null)
             {
-                PsiClass gotoClass =
-                    renameTestService
-                        .getTestClassSiblingMediator()
-                        .getSubjectClass(
-                            elementClass,
-                            renameTestService.getSearchScope(elementClass, ProjectProductionScope.INSTANCE)
-                        );
+                gotoClasses = renameTestService.findTestClasses(elementClass);
+
+                if (gotoClasses.isEmpty())
+                {
+                    return null;
+                }
+
+                if (elementMethod != null)
+                {
+                    gotoMethods =
+                        nullIfEmpty(
+                            renameTestService
+                                .getTestMethodSiblingMediator()
+                                .getTestMethods(elementMethod, gotoClasses));
+                }
+            }
+            else
+            {
+                PsiClass gotoClass = renameTestService.findSubjectClass(testClass);
 
                 if (gotoClass == null)
                 {
@@ -101,56 +105,22 @@ public class JumpToSiblingAction
                 if (elementMethod != null)
                 {
                     gotoMethods =
-                        renameTestService.getTestMethodSiblingMediator().getSubjectMethods(elementMethod, gotoClass);
-
-                    if (gotoMethods.isEmpty())
-                    {
-                        gotoMethods = null;
-                    }
-                }
-            }
-            else
-            {
-                gotoClasses =
-                    renameTestService
-                        .getTestClassSiblingMediator()
-                        .getTestClasses(
-                            elementClass,
-                            renameTestService.getSearchScope(elementClass, TestsScope.INSTANCE)
-                        );
-
-                if (gotoClasses.isEmpty())
-                {
-                    return null;
-                }
-
-                if (elementMethod != null)
-                {
-                    gotoMethods =
-                        renameTestService.getTestMethodSiblingMediator().getTestMethods(elementMethod, gotoClasses);
-
-                    if (gotoMethods.isEmpty())
-                    {
-                        gotoMethods = null;
-                    }
+                        nullIfEmpty(
+                            renameTestService
+                                .getTestMethodSiblingMediator()
+                                .getSubjectMethods(elementMethod, gotoClass));
                 }
             }
 
             return gotoMethods == null
-                ? new GotoData(file, gotoClasses.toArray(new PsiElement[gotoClasses.size()]), emptyList())
-                : new GotoData(file, gotoMethods.toArray(new PsiElement[gotoMethods.size()]), emptyList());
+                ? new GotoData(file, gotoClasses.toArray(PsiElement.EMPTY_ARRAY), emptyList())
+                : new GotoData(file, gotoMethods.toArray(PsiElement.EMPTY_ARRAY), emptyList());
         }
-    }
 
-    public JumpToSiblingAction()
-    {
-        this(null);
-    }
-
-    @NonInjectable
-    public JumpToSiblingAction(PsiElement element)
-    {
-        this.element = element;
+        private <T> List<T> nullIfEmpty(List<T> elements)
+        {
+            return elements.isEmpty() ? null : elements;
+        }
     }
 
     @Override
@@ -168,35 +138,32 @@ public class JumpToSiblingAction
 
         presentation.setEnabled(false);
 
-        PsiElement element =
-            this.element == null
-                ? file.findElementAt(editor.getCaretModel().getOffset())
-                : this.element;
+        PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
 
-        PsiElement elementParent = PsiTreeUtil.findFirstParent(element, TestElementAdapters::isClass);
-
-        if (elementParent == null)
+        if (element == null)
         {
             return;
         }
 
-        PsiClass elementClass = TestElementAdapters.asClass(elementParent, element.getResolveScope());
+        PsiClass elementClass =
+            TestElementAdapters
+                .asClass(
+                    PsiTreeUtil.findFirstParent(element, TestElementAdapters::isClass), element.getResolveScope());
 
         if (!TestInsanityUtil.psiNameIsSet(elementClass))
         {
             return;
         }
 
-        RenameTestService renameTestService = RenameTestService.getInstance(project);
-
-        if (renameTestService.getTestClassSiblingMediator().isTestClass(elementClass))
-        {
-            presentation.setText("_Jump to Subject", true);
-        }
-        else
-        {
-            presentation.setText("_Jump to Test", true);
-        }
+        presentation
+            .setText(
+                (RenameTestService
+                    .getInstance(project)
+                    .getTestClassSiblingMediator()
+                    .resolveTestClass(elementClass) == null)
+                        ? "_Jump to Test"
+                        : "_Jump to Subject",
+                true);
 
         presentation.setEnabled(true);
     }

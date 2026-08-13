@@ -1,6 +1,7 @@
 package org.bitstrings.idea.plugins.testinsanity;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import javax.swing.JButton;
@@ -21,6 +22,8 @@ import com.intellij.ui.IdeBorderFactory;
 
 public class TestInsanityForm
 {
+    private static final char PATTERN_SEPARATOR = ';';
+
     private JPanel settingsPanel;
     private JTextField testClassPatternTextField;
     private JPanel testClassPanel;
@@ -36,7 +39,7 @@ public class TestInsanityForm
     private JRadioButton testMethodNameCapSchemeUnchangedRadio;
     private JPanel testMethodPresetPatternsPanel;
     private JEditorPane testMethodPresetPreviewPane;
-    private JComboBox testMethodPresetCombo;
+    private JComboBox<String> testMethodPresetCombo;
     private JButton testMethodPresetSelectButton;
     private JCheckBox enableRefactoringSupportCheckBox;
     private JCheckBox enableNavigationCheckBox;
@@ -45,6 +48,8 @@ public class TestInsanityForm
     private JCheckBox showRenamingDialogCheckBox;
     private JCheckBox includeInheritedMethodsCheckBox;
     private JCheckBox includeInterfacesAbstractsCheckBox;
+    private JCheckBox includeNestedClassesCheckBox;
+    private JCheckBox syncDisplayNameCheckBox;
 
     private final ArrayList<String> presetPreviewPaneTexts = new ArrayList<>();
 
@@ -79,17 +84,34 @@ public class TestInsanityForm
             presetPreviewPaneTexts.add(TestInsanityBundle.message(keyPrefix + ".example"));
         }
 
-        testMethodPresetCombo.setSelectedIndex(0);
-        testMethodPresetPreviewPane.setText(presetPreviewPaneTexts.get(0));
+        if (!presetPreviewPaneTexts.isEmpty())
+        {
+            testMethodPresetCombo.setSelectedIndex(0);
+        }
 
-        testMethodPresetCombo.addActionListener(
-            event -> testMethodPresetPreviewPane
-                .setText(presetPreviewPaneTexts.get(((JComboBox<?>) event.getSource()).getSelectedIndex()))
-        );
+        showPresetPreview(testMethodPresetCombo.getSelectedIndex());
 
-        testMethodPresetSelectButton.addActionListener(
-            event -> testMethodNamePatternTextField.setText(testMethodPresetCombo.getSelectedItem().toString())
-        );
+        testMethodPresetCombo.addActionListener(event -> showPresetPreview(testMethodPresetCombo.getSelectedIndex()));
+
+        testMethodPresetSelectButton.addActionListener(event -> applySelectedPreset());
+    }
+
+    private void showPresetPreview(int presetIndex)
+    {
+        if ((presetIndex >= 0) && (presetIndex < presetPreviewPaneTexts.size()))
+        {
+            testMethodPresetPreviewPane.setText(presetPreviewPaneTexts.get(presetIndex));
+        }
+    }
+
+    private void applySelectedPreset()
+    {
+        Object selectedPreset = testMethodPresetCombo.getSelectedItem();
+
+        if (selectedPreset != null)
+        {
+            testMethodNamePatternTextField.setText(selectedPreset.toString());
+        }
     }
 
     public JPanel getSettingsPanel()
@@ -110,8 +132,8 @@ public class TestInsanityForm
         testAnnotationJunit4CheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.JUNIT4));
         testAnnotationJunit5CheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.JUNIT5));
         testAnnotationTestNgCheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.TESTNG));
-        testClassPatternTextField.setText(settings.getTestClassPattern());
-        testMethodNamePatternTextField.setText(settings.getTestMethodNamePattern());
+        testClassPatternTextField.setText(formatPatterns(settings.resolveTestClassPatterns()));
+        testMethodNamePatternTextField.setText(formatPatterns(settings.resolveTestMethodNamePatterns()));
         testMethodNameCapSchemeOnlyIfPrefixedRadio
             .setSelected(settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.IF_PREFIXED);
         testMethodNameCapSchemeAlwaysRadio
@@ -124,20 +146,19 @@ public class TestInsanityForm
         showGutterAnnotationCheckBox.setSelected(settings.isGutterAnnotationEnabled());
         includeInheritedMethodsCheckBox.setSelected(settings.isIncludeInheritedMethods());
         includeInterfacesAbstractsCheckBox.setSelected(settings.isIncludeInterfacesAbstracts());
+        includeNestedClassesCheckBox.setSelected(settings.isIncludeNestedClasses());
+        syncDisplayNameCheckBox.setSelected(settings.isSyncDisplayName());
     }
 
     public void apply()
     {
-        settings
-            .setTestkAnnotation(TestAnnotation.JUNIT4, testAnnotationJunit4CheckBox.isSelected());
-        settings
-            .setTestkAnnotation(TestAnnotation.JUNIT5, testAnnotationJunit5CheckBox.isSelected());
-        settings
-            .setTestkAnnotation(TestAnnotation.TESTNG, testAnnotationTestNgCheckBox.isSelected());
+        settings.setTestAnnotation(TestAnnotation.JUNIT4, testAnnotationJunit4CheckBox.isSelected());
+        settings.setTestAnnotation(TestAnnotation.JUNIT5, testAnnotationJunit5CheckBox.isSelected());
+        settings.setTestAnnotation(TestAnnotation.TESTNG, testAnnotationTestNgCheckBox.isSelected());
 
-        settings.setTestClassPattern(testClassPatternTextField.getText());
+        settings.updateTestClassPatterns(parsePatterns(testClassPatternTextField.getText()));
 
-        settings.setTestMethodNamePattern(testMethodNamePatternTextField.getText());
+        settings.updateTestMethodNamePatterns(parsePatterns(testMethodNamePatternTextField.getText()));
 
         if (testMethodNameCapSchemeOnlyIfPrefixedRadio.isSelected())
         {
@@ -158,12 +179,16 @@ public class TestInsanityForm
         settings.setGutterAnnotationEnabled(showGutterAnnotationCheckBox.isSelected());
         settings.setIncludeInheritedMethods(includeInheritedMethodsCheckBox.isSelected());
         settings.setIncludeInterfacesAbstracts(includeInterfacesAbstractsCheckBox.isSelected());
+        settings.setIncludeNestedClasses(includeNestedClassesCheckBox.isSelected());
+        settings.setSyncDisplayName(syncDisplayNameCheckBox.isSelected());
     }
 
     public boolean isModified()
     {
-        return (!Objects.equals(testClassPatternTextField.getText(), settings.getTestClassPattern()))
-            || (!Objects.equals(testMethodNamePatternTextField.getText(), settings.getTestMethodNamePattern()))
+        return (!Objects.equals(
+                parsePatterns(testClassPatternTextField.getText()), settings.resolveTestClassPatterns()))
+            || (!Objects.equals(
+                parsePatterns(testMethodNamePatternTextField.getText()), settings.resolveTestMethodNamePatterns()))
             || (testMethodNameCapSchemeOnlyIfPrefixedRadio
                 .isSelected() != (settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.IF_PREFIXED))
             || (testMethodNameCapSchemeAlwaysRadio
@@ -175,9 +200,33 @@ public class TestInsanityForm
             || (testAnnotationTestNgCheckBox.isSelected() != settings.hasTestAnnotation(TestAnnotation.TESTNG))
             || (enableRefactoringSupportCheckBox.isSelected() != settings.isRefactoringEnabled())
             || (enableNavigationCheckBox.isSelected() != settings.isNavigationEnabled())
-            || (showRenamingDialogCheckBox.isSelected() != settings.isNavigationEnabled())
+            || (showRenamingDialogCheckBox.isSelected() != settings.isRenamingDialogEnabled())
             || (showGutterAnnotationCheckBox.isSelected() != settings.isGutterAnnotationEnabled())
             || (includeInheritedMethodsCheckBox.isSelected() != settings.isIncludeInheritedMethods())
-            || (includeInterfacesAbstractsCheckBox.isSelected() != settings.isIncludeInterfacesAbstracts());
+            || (includeInterfacesAbstractsCheckBox.isSelected() != settings.isIncludeInterfacesAbstracts())
+            || (includeNestedClassesCheckBox.isSelected() != settings.isIncludeNestedClasses())
+            || (syncDisplayNameCheckBox.isSelected() != settings.isSyncDisplayName());
+    }
+
+    private static List<String> parsePatterns(String patternsText)
+    {
+        List<String> patterns = new ArrayList<>();
+
+        for (String pattern : StringUtils.split(StringUtils.defaultString(patternsText), PATTERN_SEPARATOR))
+        {
+            String trimmedPattern = pattern.trim();
+
+            if (!trimmedPattern.isEmpty())
+            {
+                patterns.add(trimmedPattern);
+            }
+        }
+
+        return patterns;
+    }
+
+    private static String formatPatterns(List<String> patterns)
+    {
+        return String.join(String.valueOf(PATTERN_SEPARATOR), patterns);
     }
 }

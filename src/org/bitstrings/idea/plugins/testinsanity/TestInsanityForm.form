@@ -58,7 +58,7 @@
                 </constraints>
                 <properties>
                   <editable value="false"/>
-                  <text value="${className} = source file name (can appear only once)&#10;(Test|IT) = 'Test' or 'IT'&#10;(Test|) = 'Test' or nothing"/>
+                  <text value="${className} = source file name (can appear only once)&#10;(Test|IT) = 'Test' or 'IT'&#10;(Test|) = 'Test' or nothing&#10;; = separates alternative patterns, first match wins"/>
                 </properties>
               </component>
               <component id="6c092" class="javax.swing.JCheckBox" binding="includeInterfacesAbstractsCheckBox" default-binding="true">
@@ -251,7 +251,7 @@
                   </grid>
                 </children>
               </grid>
-              <grid id="c2c96" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="c2c96" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -265,14 +265,24 @@
                     </constraints>
                     <properties>
                       <editable value="false"/>
-                      <text value="${subjectName} = subject method name (can appear only once)&#10;(test|spec) = 'test' or 'spec'&#10;(test|) = 'test' or nothing&#10;&#10;Only valid for suffix:&#10;* = any string (can be empty)&#10;+ = any string with at least 1 character"/>
+                      <text value="${subjectName} = subject method name (can appear only once)&#10;(test|spec) = 'test' or 'spec'&#10;(test|) = 'test' or nothing&#10;; = separates alternative patterns, first match wins&#10;&#10;Only valid for suffix:&#10;* = any string (can be empty)&#10;+ = any string with at least 1 character"/>
                     </properties>
                   </component>
                   <hspacer id="df746">
                     <constraints>
-                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                      <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                     </constraints>
                   </hspacer>
+                  <component id="3a1c7" class="javax.swing.JCheckBox" binding="includeNestedClassesCheckBox" default-binding="true">
+                    <constraints>
+                      <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <selected value="true"/>
+                      <text value="Include nested classes"/>
+                      <toolTipText value="Match test methods declared in nested test classes, such as JUnit 5 @Nested."/>
+                    </properties>
+                  </component>
                   <component id="8f56b" class="javax.swing.JCheckBox" binding="includeInheritedMethodsCheckBox" default-binding="true">
                     <constraints>
                       <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
@@ -296,7 +306,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="72e08" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="72e08" layout-manager="GridLayoutManager" row-count="1" column-count="6" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="8" left="0" bottom="8" right="0"/>
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -315,9 +325,18 @@
               </component>
               <hspacer id="72a38">
                 <constraints>
-                  <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
               </hspacer>
+              <component id="9b4d2" class="javax.swing.JCheckBox" binding="syncDisplayNameCheckBox" default-binding="true">
+                <constraints>
+                  <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Sync @DisplayName"/>
+                  <toolTipText value="Generate @DisplayName on created test methods and keep a generated one in sync on rename."/>
+                </properties>
+              </component>
               <component id="bd921" class="javax.swing.JCheckBox" binding="enableNavigationCheckBox" default-binding="true">
                 <constraints>
                   <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -342,7 +361,8 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="Show renaming dialog"/>
+                  <text value="Pre-select test renames"/>
+                  <toolTipText value="Pre-select the test and subject renames in the Rename related items dialog."/>
                 </properties>
               </component>
             </children>

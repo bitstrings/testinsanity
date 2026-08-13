@@ -1,9 +1,14 @@
 package org.bitstrings.idea.plugins.testinsanity.config;
 
+import static java.util.Collections.singletonList;
+
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.PatternBasedTestClassSiblingMediator;
 import org.bitstrings.idea.plugins.testinsanity.PatternBasedTestMethodSiblingMediator;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher.CapitalizationScheme;
@@ -30,20 +35,29 @@ public class TestInsanitySettings
         ),
         TESTNG("org.testng.annotations.Test");
 
-        private final Set<String> annotationsFqns;
+        private final List<String> annotationsFqns;
 
         TestAnnotation(String... annotationsFqns)
         {
-            this.annotationsFqns = Set.of(annotationsFqns);
+            this.annotationsFqns = List.of(annotationsFqns);
         }
 
-        public Set<String> getAnnotationsFqns()
+        public List<String> getAnnotationsFqns()
         {
             return annotationsFqns;
+        }
+
+        public String getPrimaryAnnotationFqn()
+        {
+            return annotationsFqns.get(0);
         }
     }
 
     public final Set<String> testAnnotations = new HashSet<>();
+
+    public final List<String> testClassPatterns = new ArrayList<>();
+
+    public final List<String> testMethodNamePatterns = new ArrayList<>();
 
     public String testClassPattern;
 
@@ -63,13 +77,15 @@ public class TestInsanitySettings
 
     public boolean includeInterfacesAbstracts;
 
+    public boolean includeNestedClasses;
+
+    public boolean syncDisplayName;
+
     public TestInsanitySettings()
     {
-        setTestkAnnotation(TestAnnotation.JUNIT4, true);
-        setTestkAnnotation(TestAnnotation.JUNIT5, true);
-        setTestkAnnotation(TestAnnotation.TESTNG, true);
-        setTestClassPattern(PatternBasedTestClassSiblingMediator.DEFAULT_TEST_CLASS_NAME_PATTERN);
-        setTestMethodNamePattern(PatternBasedTestMethodSiblingMediator.DEFAULT_METHOD_NAME_PATTERN);
+        setTestAnnotation(TestAnnotation.JUNIT4, true);
+        setTestAnnotation(TestAnnotation.JUNIT5, true);
+        setTestAnnotation(TestAnnotation.TESTNG, true);
         setTestMethodNameCapitalizationScheme(CapitalizationScheme.IF_PREFIXED);
         setRefactoringEnabled(true);
         setNavigationEnabled(true);
@@ -77,6 +93,8 @@ public class TestInsanitySettings
         setGutterAnnotationEnabled(true);
         setIncludeInheritedMethods(true);
         setIncludeInterfacesAbstracts(false);
+        setIncludeNestedClasses(true);
+        setSyncDisplayName(false);
     }
 
     public static TestInsanitySettings getInstance(Project project)
@@ -103,7 +121,7 @@ public class TestInsanitySettings
         XmlSerializerUtil.copyBean(settings, this);
     }
 
-    public void setTestkAnnotation(TestAnnotation annotation, boolean enabled)
+    public void setTestAnnotation(TestAnnotation annotation, boolean enabled)
     {
         if (enabled)
         {
@@ -125,24 +143,55 @@ public class TestInsanitySettings
         return testAnnotations;
     }
 
-    public void setTestClassPattern(String testClassPattern)
+    public List<String> resolveTestClassPatterns()
     {
-        this.testClassPattern = testClassPattern;
+        List<String> patterns = withoutBlanks(testClassPatterns);
+
+        return patterns.isEmpty()
+            ? singletonList(
+                StringUtils.defaultIfBlank(
+                    testClassPattern, PatternBasedTestClassSiblingMediator.DEFAULT_TEST_CLASS_NAME_PATTERN))
+            : patterns;
     }
 
-    public String getTestClassPattern()
+    public void updateTestClassPatterns(List<String> patterns)
     {
-        return testClassPattern;
+        testClassPatterns.clear();
+        testClassPatterns.addAll(patterns);
+        testClassPattern = patterns.isEmpty() ? null : patterns.get(0);
     }
 
-    public void setTestMethodNamePattern(String testMethodNamePattern)
+    public List<String> resolveTestMethodNamePatterns()
     {
-        this.testMethodNamePattern = testMethodNamePattern;
+        List<String> patterns = withoutBlanks(testMethodNamePatterns);
+
+        return patterns.isEmpty()
+            ? singletonList(
+                StringUtils.defaultIfBlank(
+                    testMethodNamePattern, PatternBasedTestMethodSiblingMediator.DEFAULT_METHOD_NAME_PATTERN))
+            : patterns;
     }
 
-    public String getTestMethodNamePattern()
+    private static List<String> withoutBlanks(List<String> patterns)
     {
-        return testMethodNamePattern;
+        List<String> nonBlankPatterns = new ArrayList<>();
+
+        for (String pattern : patterns)
+        {
+            if (StringUtils.isNotBlank(pattern))
+            {
+                nonBlankPatterns.add(pattern);
+            }
+        }
+
+        return nonBlankPatterns;
+    }
+
+    public void updateTestMethodNamePatterns(List<String> patterns)
+    {
+        testMethodNamePatterns.clear();
+        testMethodNamePatterns.addAll(patterns);
+        testMethodNamePattern = patterns.isEmpty() ? null : patterns.get(0);
     }
 
     public void setTestMethodNameCapitalizationScheme(
@@ -214,5 +263,25 @@ public class TestInsanitySettings
     public boolean isIncludeInterfacesAbstracts()
     {
         return includeInterfacesAbstracts;
+    }
+
+    public void setIncludeNestedClasses(boolean includeNestedClasses)
+    {
+        this.includeNestedClasses = includeNestedClasses;
+    }
+
+    public boolean isIncludeNestedClasses()
+    {
+        return includeNestedClasses;
+    }
+
+    public void setSyncDisplayName(boolean syncDisplayName)
+    {
+        this.syncDisplayName = syncDisplayName;
+    }
+
+    public boolean isSyncDisplayName()
+    {
+        return syncDisplayName;
     }
 }

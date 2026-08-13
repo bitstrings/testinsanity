@@ -21,4 +21,8 @@ public interface TestMethodSiblingMediator
     String renameSubjectName(String subjectName, String oldTestName, String newTestName);
 
     boolean checkMethodAnnotation(PsiMethod targetMethod, boolean failOnEmpty);
+
+    boolean matchesTestName(String testName, String subjectName);
+
+    String generateTestName(String subjectName);
 }

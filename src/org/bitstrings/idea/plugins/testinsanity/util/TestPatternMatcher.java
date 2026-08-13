@@ -19,7 +19,12 @@ public final class TestPatternMatcher
 {
     private static final Pattern AFFIX_REGEX_PATTERN = Pattern.compile("([^\\|\\(\\)\\+\\*]+)([\\|\\(])?");
 
-    private static final Pattern VALID_CHARS = Pattern.compile("[^\\w_\\$\\+\\*\\(\\)\\|]", Pattern.CASE_INSENSITIVE);
+    private static final Pattern VALID_CHARS =
+        Pattern.compile("[^\\w_\\$\\+\\*\\(\\)\\|\\s'\\-\\.]", Pattern.CASE_INSENSITIVE);
+
+    private static final Pattern ALTERNATION_GROUP = Pattern.compile("\\(([^\\(\\)]*)\\)");
+
+    private static final String GENERATED_WILDCARD_VALUE = "test";
 
     private static final String[] WILDCARDS = new String[] { "*", "+" };
 
@@ -120,7 +125,7 @@ public final class TestPatternMatcher
 
     public boolean patternContainsWildcard(String pattern)
     {
-        return StringUtils.containsAny(pattern, "+", "*");
+        return (pattern.indexOf('*') >= 0) || (pattern.indexOf('+') >= 0);
     }
 
     public boolean patternContainsTokenName()
@@ -216,13 +221,9 @@ public final class TestPatternMatcher
 
         for (String candidate : subjectCandidates)
         {
-            String candidateTestSubject =
-                (subjectCapitalizationScheme == CapitalizationScheme.ALWAYS)
-                    || ((subjectCapitalizationScheme == CapitalizationScheme.IF_PREFIXED) && !prefixValue.isEmpty())
-                        ? capitalize(candidate)
-                        : candidate;
+            String candidateTestSubject = capitalizeSubject(candidate, prefixValue);
 
-            String candidateSuffixValue = StringUtils.removeStart(restValue, candidateTestSubject);
+            String candidateSuffixValue = removePrefix(restValue, candidateTestSubject);
             if (
                 (candidateSuffixValue.length() < restValue.length()) && (candidateTestSubject.length() > foundValue
                     .length())
@@ -250,16 +251,68 @@ public final class TestPatternMatcher
             return test;
         }
 
-        if (
-            (subjectCapitalizationScheme == CapitalizationScheme.ALWAYS)
-                || ((subjectCapitalizationScheme == CapitalizationScheme.IF_PREFIXED)
-                    && !sourceParts.getPrefix().isEmpty())
-        )
+        return (sourceParts.getPrefix()
+            + capitalizeSubject(newSubject, sourceParts.getPrefix())
+            + sourceParts.getSuffix());
+    }
+
+    public String generateTestName(String subjectName)
+    {
+        String prefix = resolveLiteral(prefixPattern);
+
+        return prefix + capitalizeSubject(subjectName, prefix) + resolveLiteral(suffixPattern);
+    }
+
+    private String capitalizeSubject(String subjectName, String prefix)
+    {
+        return subjectIsCapitalized(prefix) ? capitalize(subjectName) : subjectName;
+    }
+
+    private boolean subjectIsCapitalized(String prefix)
+    {
+        return (subjectCapitalizationScheme == CapitalizationScheme.ALWAYS)
+            || ((subjectCapitalizationScheme == CapitalizationScheme.IF_PREFIXED) && !prefix.isEmpty());
+    }
+
+    private static String resolveLiteral(String pattern)
+    {
+        Matcher matcher = ALTERNATION_GROUP.matcher(pattern);
+
+        StringBuilder resolved = new StringBuilder();
+
+        while (matcher.find())
         {
-            newSubject = capitalize(newSubject);
+            matcher.appendReplacement(resolved, Matcher.quoteReplacement(resolveAlternation(matcher.group(1))));
         }
 
-        return (sourceParts.getPrefix() + newSubject + sourceParts.getSuffix());
+        matcher.appendTail(resolved);
+
+        return resolved.toString().replace("*", "").replace("+", GENERATED_WILDCARD_VALUE);
+    }
+
+    private static String removePrefix(String value, String prefix)
+    {
+        return value.startsWith(prefix) ? value.substring(prefix.length()) : value;
+    }
+
+    private static String removeSuffix(String value, String suffix)
+    {
+        return value.endsWith(suffix) ? value.substring(0, value.length() - suffix.length()) : value;
+    }
+
+    private static String resolveAlternation(String alternation)
+    {
+        String[] alternatives = alternation.split("\\|", -1);
+
+        for (String alternative : alternatives)
+        {
+            if (alternative.isEmpty())
+            {
+                return "";
+            }
+        }
+
+        return alternatives[0];
     }
 
     public String renameSubject(String oldSubject, String oldTest, String newTest)
@@ -277,17 +330,10 @@ public final class TestPatternMatcher
         }
 
         String newSubject =
-            StringUtils.removeEnd(StringUtils.removeStart(newTest, testParts.getPrefix()), testParts.getSuffix());
+            removeSuffix(removePrefix(newTest, testParts.getPrefix()), testParts.getSuffix());
 
-        if (
-            (subjectCapitalizationScheme == CapitalizationScheme.ALWAYS)
-                || ((subjectCapitalizationScheme == CapitalizationScheme.IF_PREFIXED)
-                    && !testParts.getPrefix().isEmpty())
-        )
-        {
-            newSubject = uncapitalize(newSubject);
-        }
-
-        return newSubject;
+        return subjectIsCapitalized(testParts.getPrefix())
+            ? uncapitalize(newSubject)
+            : newSubject;
     }
 }

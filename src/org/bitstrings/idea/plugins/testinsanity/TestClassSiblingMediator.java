@@ -21,4 +21,10 @@ public interface TestClassSiblingMediator
     String renameSubjectName(String subjectName, String oldTestName, String newTestName);
 
     boolean isTestClass(PsiClass candidateTestClass);
+
+    boolean matchesTestName(String testName, String subjectName);
+
+    PsiClass resolveTestClass(PsiClass candidateClass);
+
+    String generateTestName(String subjectName);
 }

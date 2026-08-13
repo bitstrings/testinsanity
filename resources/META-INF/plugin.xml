@@ -120,11 +120,13 @@
             key="testinsanity.settings.name"
             bundle="messages.TestInsanityBundle"
             nonDefaultProject="false"/>
-        <renamePsiElementProcessor implementation="org.bitstrings.idea.plugins.testinsanity.RenameTestMethodProcessor"
-                                   order="first, before javamethod, after KotlinFunction, before KotlinAwareJavaGetter"/>
-<!--        <renamePsiElementProcessor implementation="org.bitstrings.idea.plugins.testinsanity.RenameTestClassProcessor"-->
-<!--                                   order="first"/>-->
-        <annotator language="JVM" implementationClass="org.bitstrings.idea.plugins.testinsanity.annotators.TestAnnotator"/>
+        <automaticRenamerFactory
+            implementation="org.bitstrings.idea.plugins.testinsanity.TestClassAutomaticRenamerFactory"/>
+        <automaticRenamerFactory
+            implementation="org.bitstrings.idea.plugins.testinsanity.TestMethodAutomaticRenamerFactory"/>
+        <codeInsight.lineMarkerProvider
+            language="JVM"
+            implementationClass="org.bitstrings.idea.plugins.testinsanity.markers.TestSiblingLineMarkerProvider"/>
     </extensions>
 
     <actions>

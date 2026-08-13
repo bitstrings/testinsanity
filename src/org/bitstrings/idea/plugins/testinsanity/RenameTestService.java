@@ -1,33 +1,54 @@
 package org.bitstrings.idea.plugins.testinsanity;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.serviceContainer.NonInjectable;
 
 public class RenameTestService
 {
-    private TestClassSiblingMediator testClassSiblingMediator;
+    private static final class Mediators
+    {
+        private final TestClassSiblingMediator classMediator;
 
-    private TestMethodSiblingMediator testMethodSiblingMediator;
+        private final TestMethodSiblingMediator methodMediator;
+
+        Mediators(TestClassSiblingMediator classMediator, TestMethodSiblingMediator methodMediator)
+        {
+            this.classMediator = classMediator;
+            this.methodMediator = methodMediator;
+        }
+    }
+
+    private volatile Mediators mediators;
 
     private final TestInsanitySettings settings;
+
+    private final SimpleModificationTracker configurationTracker = new SimpleModificationTracker();
 
     public RenameTestService(Project project)
     {
@@ -43,8 +64,7 @@ public class RenameTestService
         TestMethodSiblingMediator testMethodSiblingMediator
     )
     {
-        this.testClassSiblingMediator = testClassSiblingMediator;
-        this.testMethodSiblingMediator = testMethodSiblingMediator;
+        this.mediators = new Mediators(testClassSiblingMediator, testMethodSiblingMediator);
 
         this.settings = TestInsanitySettings.getInstance(project);
     }
@@ -56,30 +76,91 @@ public class RenameTestService
 
     public TestClassSiblingMediator getTestClassSiblingMediator()
     {
-        return testClassSiblingMediator;
+        return mediators.classMediator;
     }
 
     public TestMethodSiblingMediator getTestMethodSiblingMediator()
     {
-        return testMethodSiblingMediator;
+        return mediators.methodMediator;
     }
 
-    public Map<PsiClass, String> renameSubjectClassMapping(
-        PsiClass subjectClass, String newSubjectName, GlobalSearchScope searchScope
-    )
+    public List<PsiClass> findTestClasses(PsiClass subjectClass)
     {
-        String oldSubjectName = subjectClass.getName();
+        return CachedValuesManager.getCachedValue(
+            subjectClass,
+            () -> CachedValueProvider.Result.create(
+                mediators.classMediator.getTestClasses(subjectClass, getSearchScope(subjectClass)),
+                PsiModificationTracker.MODIFICATION_COUNT,
+                ProjectRootManager.getInstance(subjectClass.getProject()),
+                configurationTracker
+            )
+        );
+    }
 
+    public PsiClass findSubjectClass(PsiClass testClass)
+    {
+        return CachedValuesManager.getCachedValue(
+            testClass,
+            () -> CachedValueProvider.Result.create(
+                mediators.classMediator.getSubjectClass(testClass, getSearchScope(testClass)),
+                PsiModificationTracker.MODIFICATION_COUNT,
+                ProjectRootManager.getInstance(testClass.getProject()),
+                configurationTracker
+            )
+        );
+    }
+
+    public PsiClass resolveTestClass(PsiMethod method)
+    {
+        PsiClass containingClass = method.getContainingClass();
+
+        if (!TestInsanityUtil.psiNameIsSet(containingClass))
+        {
+            return null;
+        }
+
+        PsiClass testClass = mediators.classMediator.resolveTestClass(containingClass);
+
+        return (testClass == null)
+            ? findInheritedTestClass(containingClass)
+            : testClass;
+    }
+
+    public PsiClass findInheritedTestClass(PsiClass baseClass)
+    {
+        if (!isInTestSources(baseClass))
+        {
+            return null;
+        }
+
+        return CachedValuesManager.getCachedValue(
+            baseClass,
+            () -> CachedValueProvider.Result.create(
+                computeInheritedTestClass(baseClass),
+                PsiModificationTracker.MODIFICATION_COUNT,
+                ProjectRootManager.getInstance(baseClass.getProject()),
+                configurationTracker
+            )
+        );
+    }
+
+    public Map<PsiClass, String> renameSubjectClassMapping(PsiClass subjectClass, String newSubjectName)
+    {
         Map<PsiClass, String> renames = new LinkedHashMap<>();
 
-        List<PsiClass> testClasses = testClassSiblingMediator.getTestClasses(subjectClass, searchScope);
+        if (!TestInsanityUtil.psiNameIsSet(subjectClass))
+        {
+            return renames;
+        }
 
-        for (PsiClass testClass : testClasses)
+        TestClassSiblingMediator classMediator = mediators.classMediator;
+
+        for (PsiClass testClass : findTestClasses(subjectClass))
         {
             String newTestClassName =
-                testClassSiblingMediator.renameTestName(testClass.getName(), oldSubjectName, newSubjectName);
+                classMediator.renameTestName(testClass.getName(), subjectClass.getName(), newSubjectName);
 
-            if (!Objects.equals(newTestClassName, oldSubjectName))
+            if (!Objects.equals(newTestClassName, testClass.getName()))
             {
                 renames.put(testClass, newTestClassName);
             }
@@ -88,166 +169,198 @@ public class RenameTestService
         return renames;
     }
 
-    public Map<PsiClass, String> renameTestClassMapping(
-        PsiClass testClass, String newTestName, GlobalSearchScope searchScope
-    )
+    public Map<PsiClass, String> renameTestClassMapping(PsiClass testClass, String newTestName)
     {
-        String oldTestName = testClass.getName();
-
         Map<PsiClass, String> renames = new LinkedHashMap<>();
-
-        PsiClass subjectClass = testClassSiblingMediator.getSubjectClass(testClass, searchScope);
-
-        if (subjectClass != null)
-        {
-            String newSubjectName =
-                testClassSiblingMediator
-                    .renameSubjectName(subjectClass.getName(), oldTestName, newTestName);
-
-            if (newSubjectName != null && !Objects.equals(subjectClass, newSubjectName))
-            {
-                renames.put(subjectClass, newSubjectName);
-            }
-        }
-
-        return renames;
-    }
-
-    public Map<PsiMethod, String> renameSubjectMethodMapping(
-        PsiMethod subjectMethod, String newSubjectName, GlobalSearchScope searchScope
-    )
-    {
-        String oldSubjectName = subjectMethod.getName();
-
-        PsiClass subjectClass = subjectMethod.getContainingClass();
-
-        Map<PsiMethod, String> renames = new LinkedHashMap<>();
-
-        if (!TestInsanityUtil.psiNameIsSet(subjectClass))
-        {
-            return renames;
-        }
-
-        List<PsiMethod> testMethods =
-            testMethodSiblingMediator
-                .getTestMethods(
-                    subjectMethod,
-                    testClassSiblingMediator
-                        .getTestClasses(
-                            subjectClass,
-                            searchScope
-                        )
-                );
-
-        for (PsiMethod testMethod : testMethods)
-        {
-            String newTestMethodName =
-                testMethodSiblingMediator.renameTestName(testMethod.getName(), oldSubjectName, newSubjectName);
-
-            if (!Objects.equals(newTestMethodName, testMethod.getName()))
-            {
-                renames.put(testMethod, newTestMethodName);
-            }
-        }
-        return renames;
-    }
-
-    public Map<PsiMethod, String> renameTestMethodMapping(
-        PsiMethod testMethod, String newTestName, GlobalSearchScope searchScope
-    )
-    {
-        String oldTestName = testMethod.getName();
-
-        PsiClass testClass = testMethod.getContainingClass();
-
-        Map<PsiMethod, String> renames = new LinkedHashMap<>();
 
         if (!TestInsanityUtil.psiNameIsSet(testClass))
         {
             return renames;
         }
 
-        if (!testClassSiblingMediator.isTestClass(testClass))
-        {
-            Collection<PsiClass> testSubClasseCandidates =
-                ClassInheritorsSearch
-                    .search(
-                        testClass,
-                        searchScope.intersectWith(GlobalSearchScopes.projectTestScope(testMethod.getProject())),
-                        true
-                    )
-                    .allowParallelProcessing()
-                    .findAll();
+        PsiClass subjectClass = findSubjectClass(testClass);
 
-            for (PsiClass testSubClassCandidate : testSubClasseCandidates)
-            {
-                if (testClassSiblingMediator.isTestClass(testSubClassCandidate))
-                {
-                    testClass = testSubClassCandidate;
-                    break;
-                }
-            }
+        if (!TestInsanityUtil.psiNameIsSet(subjectClass))
+        {
+            return renames;
         }
 
-        PsiClass subjectClass = testClassSiblingMediator.getSubjectClass(testClass, searchScope);
+        String newSubjectName =
+            mediators.classMediator.renameSubjectName(subjectClass.getName(), testClass.getName(), newTestName);
 
-        if (subjectClass != null)
+        if (StringUtils.isEmpty(newSubjectName))
         {
-            List<PsiMethod> subjectMethods = testMethodSiblingMediator.getSubjectMethods(testMethod, subjectClass);
+            return renames;
+        }
 
-            if (!subjectMethods.isEmpty())
+        if (!Objects.equals(subjectClass.getName(), newSubjectName))
+        {
+            renames.put(subjectClass, newSubjectName);
+        }
+
+        renames.putAll(renameSubjectClassMapping(subjectClass, newSubjectName));
+
+        renames.remove(testClass);
+
+        return renames;
+    }
+
+    public Map<PsiMethod, String> renameSubjectMethodMapping(PsiMethod subjectMethod, String newSubjectName)
+    {
+        Map<PsiMethod, String> renames = new LinkedHashMap<>();
+
+        PsiClass subjectClass = subjectMethod.getContainingClass();
+
+        if (!TestInsanityUtil.psiNameIsSet(subjectClass))
+        {
+            return renames;
+        }
+
+        TestMethodSiblingMediator methodMediator = mediators.methodMediator;
+
+        for (PsiMethod testMethod : methodMediator.getTestMethods(subjectMethod, findTestClasses(subjectClass)))
+        {
+            String newTestMethodName =
+                methodMediator.renameTestName(testMethod.getName(), subjectMethod.getName(), newSubjectName);
+
+            if (!Objects.equals(newTestMethodName, testMethod.getName()))
             {
-                String newSubjectName =
-                    testMethodSiblingMediator
-                        .renameSubjectName(subjectMethods.get(0).getName(), oldTestName, newTestName);
-
-                if (newSubjectName == null)
-                {
-                    if (!Objects.equals(oldTestName, newTestName))
-                    {
-                        renames.put(testMethod, newTestName);
-                    }
-                }
-                else
-                {
-                    subjectMethods
-                        .forEach(
-                            subjectMethod -> renames.putAll(
-                                renameSubjectMethodMapping(subjectMethod, newSubjectName, searchScope)
-                            )
-                        );
-                }
+                renames.put(testMethod, newTestMethodName);
             }
         }
 
         return renames;
     }
 
-    public void update()
+    public Map<PsiMethod, String> renameTestMethodMapping(PsiMethod testMethod, String newTestName)
     {
-        testClassSiblingMediator =
-            new PatternBasedTestClassSiblingMediator(
-                settings.getTestClassPattern(), settings.isIncludeInterfacesAbstracts()
-            );
+        Map<PsiMethod, String> renames = new LinkedHashMap<>();
 
-        testMethodSiblingMediator =
-            new PatternBasedTestMethodSiblingMediator(
-                settings.getTestMethodNamePattern(),
-                settings.getTestMethodNameCapitalizationScheme(),
-                settings.getTestAnnotations(),
-                settings.isIncludeInheritedMethods()
-            );
+        PsiClass testClass = resolveTestClass(testMethod);
+
+        if (testClass == null)
+        {
+            return renames;
+        }
+
+        PsiClass subjectClass = findSubjectClass(testClass);
+
+        if (subjectClass == null)
+        {
+            return renames;
+        }
+
+        TestMethodSiblingMediator methodMediator = mediators.methodMediator;
+
+        List<PsiMethod> subjectMethods = methodMediator.getSubjectMethods(testMethod, subjectClass);
+
+        if (subjectMethods.isEmpty())
+        {
+            return renames;
+        }
+
+        String newSubjectName =
+            methodMediator.renameSubjectName(subjectMethods.get(0).getName(), testMethod.getName(), newTestName);
+
+        if (StringUtils.isEmpty(newSubjectName))
+        {
+            return renames;
+        }
+
+        for (PsiMethod subjectMethod : subjectMethods)
+        {
+            if (!Objects.equals(subjectMethod.getName(), newSubjectName))
+            {
+                renames.put(subjectMethod, newSubjectName);
+            }
+
+            renames.putAll(renameSubjectMethodMapping(subjectMethod, newSubjectName));
+        }
+
+        renames.remove(testMethod);
+
+        return renames;
     }
 
-    public GlobalSearchScope getSearchScope(PsiElement element, NamedScope scope)
+    public void update()
+    {
+        List<TestClassSiblingMediator> classMediators = new ArrayList<>();
+
+        for (String testClassPattern : settings.resolveTestClassPatterns())
+        {
+            classMediators.add(
+                new PatternBasedTestClassSiblingMediator(
+                    testClassPattern, settings.isIncludeInterfacesAbstracts()));
+        }
+
+        List<TestMethodSiblingMediator> methodMediators = new ArrayList<>();
+
+        for (String testMethodNamePattern : settings.resolveTestMethodNamePatterns())
+        {
+            methodMediators.add(
+                new PatternBasedTestMethodSiblingMediator(
+                    testMethodNamePattern,
+                    settings.getTestMethodNameCapitalizationScheme(),
+                    settings.getTestAnnotations(),
+                    settings.isIncludeInheritedMethods(),
+                    settings.isIncludeNestedClasses()));
+        }
+
+        mediators =
+            new Mediators(
+                new CompositeTestClassSiblingMediator(classMediators),
+                new CompositeTestMethodSiblingMediator(methodMediators));
+
+        configurationTracker.incModificationCount();
+    }
+
+    public GlobalSearchScope getSearchScope(PsiElement element)
     {
         Module module = ModuleUtilCore.findModuleForPsiElement(element);
 
-        if (module == null)
+        return (module == null)
+            ? GlobalSearchScope.EMPTY_SCOPE
+            : GlobalSearchScope
+                .moduleWithDependentsScope(module)
+                .union(GlobalSearchScope.moduleWithDependenciesScope(module));
+    }
+
+    private static boolean isInTestSources(PsiClass psiClass)
+    {
+        PsiFile containingFile = psiClass.getContainingFile();
+
+        VirtualFile classFile = (containingFile == null) ? null : containingFile.getVirtualFile();
+
+        return (classFile != null)
+            && ProjectFileIndex.getInstance(psiClass.getProject()).isInTestSourceContent(classFile);
+    }
+
+    private PsiClass computeInheritedTestClass(PsiClass baseClass)
+    {
+        Project project = baseClass.getProject();
+
+        List<PsiClass> candidates =
+            new ArrayList<>(
+                ClassInheritorsSearch
+                    .search(
+                        baseClass,
+                        getSearchScope(baseClass).intersectWith(GlobalSearchScopes.projectTestScope(project)),
+                        true
+                    )
+                    .findAll());
+
+        candidates.sort(TestInsanityUtil.STABLE_CLASS_ORDER);
+
+        TestClassSiblingMediator classMediator = mediators.classMediator;
+
+        for (PsiClass candidate : candidates)
         {
-            return GlobalSearchScope.EMPTY_SCOPE;
+            if (classMediator.isTestClass(candidate))
+            {
+                return candidate;
+            }
         }
 
-        return GlobalSearchScope.moduleWithDependentsScope(module);
+        return null;
     }
 }

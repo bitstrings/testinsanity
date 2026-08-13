@@ -1,5 +1,7 @@
 package org.bitstrings.idea.plugins.testinsanity.config;
 
+import java.util.List;
+
 import javax.swing.JComponent;
 
 import org.bitstrings.idea.plugins.testinsanity.PatternBasedTestClassSiblingMediator;
@@ -63,39 +65,62 @@ public class TestInsanityConfig
     public void apply()
         throws ConfigurationException
     {
-        String oldTestClassPatterrn = settings.getTestClassPattern();
-        String oldTestMethodNamePatterrn = settings.getTestMethodNamePattern();
+        List<String> oldTestClassPatterns = settings.resolveTestClassPatterns();
+        List<String> oldTestMethodNamePatterns = settings.resolveTestMethodNamePatterns();
 
         form.apply();
 
         try
         {
-            new PatternBasedTestClassSiblingMediator(
-                settings.getTestClassPattern(), settings.isIncludeInterfacesAbstracts()
-            ).validatePattern();
+            validatePatterns();
+        }
+        catch (ConfigurationException e)
+        {
+            settings.updateTestClassPatterns(oldTestClassPatterns);
+            settings.updateTestMethodNamePatterns(oldTestMethodNamePatterns);
+
+            throw e;
+        }
+        finally
+        {
+            RenameTestService.getInstance(project).update();
+        }
+    }
+
+    private void validatePatterns()
+        throws ConfigurationException
+    {
+        try
+        {
+            for (String testClassPattern : settings.resolveTestClassPatterns())
+            {
+                new PatternBasedTestClassSiblingMediator(
+                    testClassPattern, settings.isIncludeInterfacesAbstracts()
+                ).validatePattern();
+            }
         }
         catch (TestPatternException e)
         {
-            settings.setTestClassPattern(oldTestClassPatterrn);
             throw new ConfigurationException(e.getMessage(), e, "Test class pattern error");
         }
 
         try
         {
-            new PatternBasedTestMethodSiblingMediator(
-                settings.getTestMethodNamePattern(),
-                settings.getTestMethodNameCapitalizationScheme(),
-                settings.getTestAnnotations(),
-                settings.isIncludeInheritedMethods()
-            ).validatePattern();
+            for (String testMethodNamePattern : settings.resolveTestMethodNamePatterns())
+            {
+                new PatternBasedTestMethodSiblingMediator(
+                    testMethodNamePattern,
+                    settings.getTestMethodNameCapitalizationScheme(),
+                    settings.getTestAnnotations(),
+                    settings.isIncludeInheritedMethods(),
+                    settings.isIncludeNestedClasses()
+                ).validatePattern();
+            }
         }
         catch (TestPatternException e)
         {
-            settings.setTestMethodNamePattern(oldTestMethodNamePatterrn);
             throw new ConfigurationException(e.getMessage(), e, "Test method pattern error");
         }
-
-        RenameTestService.getInstance(project).update();
     }
 
     @Override
