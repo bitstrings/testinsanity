@@ -2,15 +2,13 @@ package org.bitstrings.idea.plugins.testinsanity.actions;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil.getLightClassMethod;
 
 import java.util.List;
 
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
-import org.jetbrains.kotlin.psi.KtClass;
-import org.jetbrains.kotlin.psi.KtNamedFunction;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
@@ -18,7 +16,6 @@ import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -58,39 +55,23 @@ public class JumpToSiblingAction
                     ? file.findElementAt(editor.getCaretModel().getOffset())
                     : JumpToSiblingAction.this.element;
 
+            if (element == null)
+            {
+                return null;
+            }
+
             RenameTestService renameTestService = RenameTestService.getInstance(project);
 
-            PsiElement elementParent =
-                PsiTreeUtil.findFirstParent(
-                    element, parent -> (parent instanceof PsiMethod) || (parent instanceof KtNamedFunction)
-                );
-
             PsiMethod elementMethod =
-                elementParent instanceof KtNamedFunction
-                    ? getLightClassMethod((KtNamedFunction) elementParent)
-                    : (PsiMethod) elementParent;
+                TestElementAdapters.asMethod(PsiTreeUtil.findFirstParent(element, TestElementAdapters::isMethod));
 
-            PsiClass elementClass;
-
-            if (elementParent == null)
-            {
-                elementParent = PsiTreeUtil
-                    .findFirstParent(element, parent -> (parent instanceof PsiClass) || (parent instanceof KtClass));
-
-                if (elementParent instanceof KtClass)
-                {
-                    elementClass = JavaPsiFacade.getInstance(project)
-                        .findClass(((KtClass) elementParent).getFqName().asString(), element.getResolveScope());
-                }
-                else
-                {
-                    elementClass = (PsiClass) elementParent;
-                }
-            }
-            else
-            {
-                elementClass = elementMethod.getContainingClass();
-            }
+            PsiClass elementClass =
+                elementMethod == null
+                    ? TestElementAdapters.asClass(
+                        PsiTreeUtil.findFirstParent(element, TestElementAdapters::isClass),
+                        element.getResolveScope()
+                    )
+                    : elementMethod.getContainingClass();
 
             if (!TestInsanityUtil.psiNameIsSet(elementClass))
             {
@@ -192,22 +173,14 @@ public class JumpToSiblingAction
                 ? file.findElementAt(editor.getCaretModel().getOffset())
                 : this.element;
 
-        PsiElement elementParent =
-            PsiTreeUtil.findFirstParent(
-                element, parent -> (parent instanceof PsiClass) || (parent instanceof KtClass));
-
-        if (elementParent instanceof KtClass)
-        {
-            elementParent = JavaPsiFacade.getInstance(project)
-                .findClass(((KtClass) elementParent).getFqName().asString(), element.getResolveScope());
-        }
+        PsiElement elementParent = PsiTreeUtil.findFirstParent(element, TestElementAdapters::isClass);
 
         if (elementParent == null)
         {
             return;
         }
 
-        PsiClass elementClass = (PsiClass) elementParent;
+        PsiClass elementClass = TestElementAdapters.asClass(elementParent, element.getResolveScope());
 
         if (!TestInsanityUtil.psiNameIsSet(elementClass))
         {

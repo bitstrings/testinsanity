@@ -1,6 +1,6 @@
 package org.bitstrings.idea.plugins.testinsanity;
 
-import static org.apache.commons.lang.StringUtils.substringBetween;
+import static org.apache.commons.lang3.StringUtils.substringBetween;
 
 import java.util.LinkedList;
 import java.util.List;

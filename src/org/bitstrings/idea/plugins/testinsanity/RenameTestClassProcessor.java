@@ -5,10 +5,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
-import org.jetbrains.kotlin.psi.KtClass;
+import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -23,14 +21,8 @@ public class RenameTestClassProcessor
     @Override
     public boolean canProcessElement(PsiElement element)
     {
-        Project project = element.getProject();
-
-        RenameTestService renameTestService = RenameTestService.getInstance(project);
-
-        GlobalSearchScope searchScope = renameTestService.getSearchScope(element, ProjectFilesScope.INSTANCE);
-
-        return (((element instanceof PsiClass) || (element instanceof KtClass))
-            && TestInsanitySettings.getInstance(project).isRefactoringEnabled());
+        return (TestElementAdapters.isClass(element)
+            && TestInsanitySettings.getInstance(element.getProject()).isRefactoringEnabled());
     }
 
     @Override
@@ -41,20 +33,19 @@ public class RenameTestClassProcessor
             return;
         }
 
-        Project project = element.getProject();
+        PsiClass elementClass = TestElementAdapters.asClass(element, element.getResolveScope());
 
-        if (element instanceof KtClass)
+        if (elementClass == null)
         {
-            element = JavaPsiFacade.getInstance(project)
-                .findClass(((KtClass) element).getFqName().asString(), element.getResolveScope());
+            return;
         }
 
-        RenameTestService renameTestService = RenameTestService.getInstance(project);
+        RenameTestService renameTestService = RenameTestService.getInstance(element.getProject());
 
-        GlobalSearchScope searchScope = renameTestService.getSearchScope(element, ProjectFilesScope.INSTANCE);
+        GlobalSearchScope searchScope = renameTestService.getSearchScope(elementClass, ProjectFilesScope.INSTANCE);
 
         allRenames.putAll(
-            renameTestService.renameTestClassMapping((PsiClass) element, newName, searchScope)
+            renameTestService.renameTestClassMapping(elementClass, newName, searchScope)
         );
     }
 

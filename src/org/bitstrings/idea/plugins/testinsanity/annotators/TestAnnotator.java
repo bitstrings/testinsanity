@@ -2,7 +2,6 @@ package org.bitstrings.idea.plugins.testinsanity.annotators;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import static org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil.getLightClassMethod;
 
 import java.util.Collections;
 import java.util.List;
@@ -13,9 +12,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.actions.JumpToSiblingAction;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
-import org.jetbrains.kotlin.psi.KtClass;
-import org.jetbrains.kotlin.psi.KtNamedFunction;
 
 import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
@@ -30,7 +28,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -133,21 +130,10 @@ public class TestAnnotator
 
         boolean annotationCheckEnabled = !settings.getTestAnnotations().isEmpty();
 
-        if (element instanceof KtNamedFunction)
-        {
-            element = getLightClassMethod((KtNamedFunction) element);
-        }
-        else if (element instanceof KtClass)
-        {
-            element = JavaPsiFacade
-                .getInstance(project)
-                .findClass(((KtClass) element).getFqName().asString(), searchScope);
-        }
+        PsiClass elementClass = TestElementAdapters.asClass(element, searchScope);
 
-        if (element instanceof PsiClass)
+        if (elementClass != null)
         {
-            PsiClass elementClass = (PsiClass) element;
-
             if (!TestInsanityUtil.psiNameIsSet(elementClass))
             {
                 return;
@@ -177,24 +163,26 @@ public class TestAnnotator
             return;
         }
 
-        if (!(element instanceof PsiMethod))
+        PsiMethod elementMethod = TestElementAdapters.asMethod(element);
+
+        if (elementMethod == null)
         {
             return;
         }
 
-        PsiClass elementClass = ((PsiMethod) element).getContainingClass();
+        PsiClass containingClass = elementMethod.getContainingClass();
 
-        if (!TestInsanityUtil.psiNameIsSet(elementClass))
+        if (!TestInsanityUtil.psiNameIsSet(containingClass))
         {
             return;
         }
 
-        if (renameTestService.getTestClassSiblingMediator().isTestClass(elementClass))
+        if (renameTestService.getTestClassSiblingMediator().isTestClass(containingClass))
         {
             if (
                 annotationCheckEnabled
                     &&
-                    !renameTestService.getTestMethodSiblingMediator().checkMethodAnnotation((PsiMethod) element, true)
+                    !renameTestService.getTestMethodSiblingMediator().checkMethodAnnotation(elementMethod, true)
             )
             {
                 return;
@@ -203,16 +191,16 @@ public class TestAnnotator
             PsiClass subjectClass =
                 renameTestService
                     .getTestClassSiblingMediator()
-                    .getSubjectClass(elementClass, searchScope);
+                    .getSubjectClass(containingClass, searchScope);
 
             List<PsiMethod> subjectMethods =
                 subjectClass == null
                     ? emptyList()
                     : renameTestService.getTestMethodSiblingMediator()
-                        .getSubjectMethods((PsiMethod) element, subjectClass);
+                        .getSubjectMethods(elementMethod, subjectClass);
 
             annotateTestMethod(
-                (PsiMethod) element,
+                elementMethod,
                 (subjectClass == null ? Collections.emptyList() : singletonList(subjectClass)), subjectMethods,
                 "Subject", !annotationCheckEnabled,
                 renameTestService, annotationHolder
@@ -223,14 +211,14 @@ public class TestAnnotator
             List<PsiClass> testClasses =
                 renameTestService
                     .getTestClassSiblingMediator()
-                    .getTestClasses(elementClass, searchScope);
+                    .getTestClasses(containingClass, searchScope);
 
             List<PsiMethod> testMethods =
                 renameTestService.getTestMethodSiblingMediator()
-                    .getTestMethods((PsiMethod) element, testClasses);
+                    .getTestMethods(elementMethod, testClasses);
 
             annotateTestMethod(
-                (PsiMethod) element, testClasses, testMethods,
+                elementMethod, testClasses, testMethods,
                 "Test", true,
                 renameTestService, annotationHolder
             );

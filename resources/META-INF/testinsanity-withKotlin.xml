@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="org.bitstrings.idea.plugins.TestInsanity">
+        <testElementAdapter implementation="org.bitstrings.idea.plugins.testinsanity.lang.KotlinTestElementAdapter"/>
+    </extensions>
+</idea-plugin>

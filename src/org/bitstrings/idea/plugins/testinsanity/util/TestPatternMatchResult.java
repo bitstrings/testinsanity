@@ -1,6 +1,6 @@
 package org.bitstrings.idea.plugins.testinsanity.util;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 public final class TestPatternMatchResult

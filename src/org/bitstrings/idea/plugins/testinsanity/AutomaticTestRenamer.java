@@ -14,9 +14,7 @@
  */
 package org.bitstrings.idea.plugins.testinsanity;
 
-import static org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil.getLightClassMethod;
-
-import org.jetbrains.kotlin.psi.KtNamedFunction;
+import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
@@ -34,22 +32,22 @@ class AutomaticTestRenamer
 
     public AutomaticTestRenamer(PsiNamedElement element, String newName)
     {
-        PsiNamedElement elementToRename =
-            element instanceof KtNamedFunction
-                ? getLightClassMethod((KtNamedFunction) element)
-                : element;
+        PsiMethod elementMethod = TestElementAdapters.asMethod(element);
+
+        if (elementMethod == null)
+        {
+            return;
+        }
 
         Project project = element.getProject();
 
-        RenameTestService renameTestService = RenameTestService.getInstance(project);
-
-        renameTestService
+        RenameTestService.getInstance(project)
             .renameSubjectMethodMapping(
-                (PsiMethod) element, newName, GlobalSearchScope.projectScope(project))
+                elementMethod, newName, GlobalSearchScope.projectScope(project))
             .forEach(
                 (rename, renameNewName) ->
                 {
-                    if (!PsiEquivalenceUtil.areElementsEquivalent(rename, elementToRename))
+                    if (!PsiEquivalenceUtil.areElementsEquivalent(rename, elementMethod))
                     {
                         myElements.add((PsiMethod) rename);
                         suggestAllNames(((PsiMethod) rename).getName(), renameNewName);

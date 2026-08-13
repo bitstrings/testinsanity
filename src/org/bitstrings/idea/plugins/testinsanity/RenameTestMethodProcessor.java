@@ -1,15 +1,12 @@
 package org.bitstrings.idea.plugins.testinsanity;
 
-import static org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil.getLightClassMethod;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
-import org.jetbrains.kotlin.psi.KtFunction;
-import org.jetbrains.kotlin.psi.KtNamedFunction;
+import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.project.Project;
@@ -35,7 +32,7 @@ public class RenameTestMethodProcessor
 
         GlobalSearchScope testSearchScope = GlobalSearchScopes.projectTestScope(project);
 
-        return (((element instanceof PsiMethod) || (element instanceof KtFunction))
+        return (TestElementAdapters.isMethod(element)
             && !PsiSearchScopeUtil.isInScope(testSearchScope, element)
             && TestInsanitySettings.getInstance(element.getProject()).isRefactoringEnabled());
     }
@@ -50,14 +47,16 @@ public class RenameTestMethodProcessor
             return;
         }
 
-        if (element instanceof KtNamedFunction)
+        PsiMethod elementMethod = TestElementAdapters.asMethod(element);
+
+        if (elementMethod == null)
         {
-            element = getLightClassMethod((KtNamedFunction) element);
+            return;
         }
 
-        super.prepareRenaming(element, newName, allRenames, scope);
+        super.prepareRenaming(elementMethod, newName, allRenames, scope);
 
-        Project project = element.getProject();
+        Project project = elementMethod.getProject();
 
         RenameTestService renameTestService = RenameTestService.getInstance(project);
 
@@ -66,15 +65,17 @@ public class RenameTestMethodProcessor
         allRenames.forEach(
             (rename, renameNewName) ->
             {
-                if (rename instanceof KtNamedFunction)
+                PsiMethod renameMethod = TestElementAdapters.asMethod(rename);
+
+                if (renameMethod == null)
                 {
-                    rename = getLightClassMethod((KtNamedFunction) rename);
+                    return;
                 }
 
                 newRenames.putAll(
                     renameTestService
                         .renameSubjectMethodMapping(
-                            (PsiMethod) rename,
+                            renameMethod,
                             renameNewName, GlobalSearchScope.projectScope(project)));
             }
         );
