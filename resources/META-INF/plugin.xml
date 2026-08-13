@@ -124,6 +124,7 @@
             implementation="org.bitstrings.idea.plugins.testinsanity.TestClassAutomaticRenamerFactory"/>
         <automaticRenamerFactory
             implementation="org.bitstrings.idea.plugins.testinsanity.TestMethodAutomaticRenamerFactory"/>
+        <testFinder implementation="org.bitstrings.idea.plugins.testinsanity.navigation.TestInsanityTestFinder"/>
         <codeInsight.lineMarkerProvider
             language="JVM"
             implementationClass="org.bitstrings.idea.plugins.testinsanity.markers.TestSiblingLineMarkerProvider"/>
