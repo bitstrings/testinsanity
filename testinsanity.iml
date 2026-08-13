@@ -37,6 +37,18 @@
     <orderEntry type="module-library" scope="PROVIDED">
       <library>
         <CLASSES>
+          <root url="file://$APPLICATION_HOME_DIR$/plugins/json/lib" />
+          <root url="file://$APPLICATION_HOME_DIR$/plugins/json/lib/modules" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file://$APPLICATION_HOME_DIR$/plugins/json/lib" recursive="false" />
+        <jarDirectory url="file://$APPLICATION_HOME_DIR$/plugins/json/lib/modules" recursive="false" />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library>
+        <CLASSES>
           <root url="file://$APPLICATION_HOME_DIR$/plugins/Kotlin/lib" />
         </CLASSES>
         <JAVADOC />

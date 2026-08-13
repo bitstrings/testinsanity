@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TestInsanity project configuration",
+  "description": "Project settings for the TestInsanity plugin. Every key is optional: a key declared here governs the project and is disabled in Settings | Tools | TestInsanity, a key left out stays an individual preference.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Optional schema reference. The plugin binds this schema automatically, so it can be omitted."
+    },
+    "testClassPatterns": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Test class name patterns, tried in order, first match wins. ${className} stands for the subject class name.",
+      "items": {
+        "type": "string",
+        "description": "For example ${className}Test, ${className}IT or ${className}(Test|Spec). Wildcards are not allowed in a class pattern.",
+        "examples": ["${className}Test", "${className}IT", "${className}Tests", "${className}Spec"]
+      }
+    },
+    "testMethodPatterns": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Test method name patterns, tried in order, first match wins. ${subjectName} stands for the subject method name.",
+      "items": {
+        "type": "string",
+        "description": "For example (test|)${subjectName}* where * matches any suffix, + matches a suffix of at least one character, and (a|b) matches either alternative. Spaces are allowed, which is what Kotlin backtick names need.",
+        "examples": ["(test|)${subjectName}*", "test${subjectName}*", "${subjectName}_+", "${subjectName} *"]
+      }
+    },
+    "capitalizeSubject": {
+      "type": "string",
+      "enum": ["unchanged", "ifPrefixed", "always"],
+      "description": "Whether the subject name is capitalized inside the test name. ifPrefixed capitalizes it only when the pattern puts something before it, so isDark becomes testIsDark but stays isDark on its own.",
+      "default": "ifPrefixed"
+    },
+    "testAnnotations": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "Test frameworks whose annotations mark a method as a test. An empty array accepts any method, which invites false positives.",
+      "items": {
+        "type": "string",
+        "enum": ["junit4", "junit5", "testng"]
+      }
+    },
+    "includeInheritedMethods": {
+      "type": "boolean",
+      "description": "Match methods inherited from a base class, not only methods declared in the class itself.",
+      "default": true
+    },
+    "includeInterfacesAndAbstracts": {
+      "type": "boolean",
+      "description": "Treat interfaces and abstract classes as test classes when their name matches a pattern.",
+      "default": false
+    },
+    "includeNestedClasses": {
+      "type": "boolean",
+      "description": "Match test methods declared in nested classes, such as JUnit 5 @Nested.",
+      "default": true
+    },
+    "syncDisplayName": {
+      "type": "boolean",
+      "description": "Generate a JUnit 5 @DisplayName on created test methods, and keep a generated one in sync when the method is renamed. A DisplayName written by hand is never overwritten.",
+      "default": false
+    },
+    "refactoring": {
+      "type": "boolean",
+      "description": "Propose the sibling renames when a class or method is renamed.",
+      "default": true
+    },
+    "navigation": {
+      "type": "boolean",
+      "description": "Offer Jump to Sibling, and answer the IDE own Navigate | Test with this naming scheme.",
+      "default": true
+    },
+    "gutterIcons": {
+      "type": "boolean",
+      "description": "Show the sibling class or method in the gutter.",
+      "default": true
+    },
+    "preselectRenames": {
+      "type": "boolean",
+      "description": "Start the proposed sibling renames checked in the Rename related items dialog.",
+      "default": true
+    }
+  }
+}

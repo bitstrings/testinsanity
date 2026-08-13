@@ -34,7 +34,8 @@
             (Java sources).</li>
         <li><b>Configuration in version control</b> &mdash; a <code>.testinsanity.json</code> at the project
             root pins the scheme for everyone, the way .editorconfig does, so nothing needs to live in
-            <code>.idea</code>. Whatever the file leaves out stays a personal preference.</li>
+            <code>.idea</code>. Whatever the file leaves out stays a personal preference, and the file itself
+            gets completion, documentation and validation as you type.</li>
       </ul>
       <b>Built for real projects</b>
       <ul>
@@ -62,7 +63,8 @@
         <li>Project configuration in <code>.testinsanity.json</code> at the project root, so the naming
             scheme lives in version control instead of in <code>.idea</code>. Keys the file declares win
             over the IDE settings and appear disabled in the settings dialog; keys it omits stay personal.
-            The file is re-read whenever it changes, including on branch switches.</li>
+            The file is re-read whenever it changes, including on branch switches, and a bundled JSON schema
+            gives it completion, inline documentation and validation.</li>
         <li>Renaming works in all four directions: subject class to test classes, test class to subject class,
             subject method to test methods, and test method to subject method.</li>
         <li>Renaming goes through the standard Rename related items dialog, so it also applies to in-place
@@ -157,6 +159,7 @@
 
     <depends>com.intellij.modules.java</depends>
     <depends optional="true" config-file="testinsanity-withKotlin.xml">org.jetbrains.kotlin</depends>
+    <depends optional="true" config-file="testinsanity-withJson.xml">com.intellij.modules.json</depends>
 
     <resource-bundle>messages.TestInsanityBundle</resource-bundle>
 
