@@ -6,7 +6,7 @@ import static java.util.Collections.singletonList;
 import java.util.List;
 
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
-import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
 import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
 
@@ -134,7 +134,7 @@ public class JumpToSiblingAction
     {
         super.update(presentation, project, editor, file);
 
-        presentation.setVisible(TestInsanitySettings.getInstance(project).isNavigationEnabled());
+        presentation.setVisible(TestInsanityConfiguration.getInstance(project).isNavigationEnabled());
 
         presentation.setEnabled(false);
 

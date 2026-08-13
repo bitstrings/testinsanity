@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
 
 import com.intellij.openapi.module.Module;
@@ -46,7 +46,7 @@ public final class RenameTestService
 
     private volatile Mediators mediators;
 
-    private final TestInsanitySettings settings;
+    private final TestInsanityConfiguration configuration;
 
     private final SimpleModificationTracker configurationTracker = new SimpleModificationTracker();
 
@@ -66,7 +66,7 @@ public final class RenameTestService
     {
         this.mediators = new Mediators(testClassSiblingMediator, testMethodSiblingMediator);
 
-        this.settings = TestInsanitySettings.getInstance(project);
+        this.configuration = TestInsanityConfiguration.getInstance(project);
     }
 
     public static RenameTestService getInstance(Project project)
@@ -286,24 +286,24 @@ public final class RenameTestService
     {
         List<TestClassSiblingMediator> classMediators = new ArrayList<>();
 
-        for (String testClassPattern : settings.resolveTestClassPatterns())
+        for (String testClassPattern : configuration.getTestClassPatterns())
         {
             classMediators.add(
                 new PatternBasedTestClassSiblingMediator(
-                    testClassPattern, settings.isIncludeInterfacesAbstracts()));
+                    testClassPattern, configuration.isIncludeInterfacesAbstracts()));
         }
 
         List<TestMethodSiblingMediator> methodMediators = new ArrayList<>();
 
-        for (String testMethodNamePattern : settings.resolveTestMethodNamePatterns())
+        for (String testMethodPattern : configuration.getTestMethodPatterns())
         {
             methodMediators.add(
                 new PatternBasedTestMethodSiblingMediator(
-                    testMethodNamePattern,
-                    settings.getTestMethodNameCapitalizationScheme(),
-                    settings.getTestAnnotations(),
-                    settings.isIncludeInheritedMethods(),
-                    settings.isIncludeNestedClasses()));
+                    testMethodPattern,
+                    configuration.getCapitalizationScheme(),
+                    configuration.getTestAnnotationFqns(),
+                    configuration.isIncludeInheritedMethods(),
+                    configuration.isIncludeNestedClasses()));
         }
 
         mediators =

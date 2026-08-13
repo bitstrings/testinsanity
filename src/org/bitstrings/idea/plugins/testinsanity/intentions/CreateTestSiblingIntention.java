@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.TestInsanityBundle;
-import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings.TestAnnotation;
 import org.bitstrings.idea.plugins.testinsanity.util.TestDisplayNames;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
@@ -238,7 +238,7 @@ public class CreateTestSiblingIntention
 
     private static PsiMethod createTestMethod(Project project, PsiClass testClass, PsiMethod subjectMethod)
     {
-        TestInsanitySettings settings = TestInsanitySettings.getInstance(project);
+        TestInsanityConfiguration configuration = TestInsanityConfiguration.getInstance(project);
 
         String testMethodName =
             RenameTestService
@@ -248,14 +248,15 @@ public class CreateTestSiblingIntention
 
         StringBuilder methodText = new StringBuilder();
 
-        String testAnnotationFqn = resolveTestAnnotationFqn(project, testClass, settings);
+        String testAnnotationFqn = resolveTestAnnotationFqn(project, testClass, configuration);
 
         if (testAnnotationFqn != null)
         {
             methodText.append('@').append(testAnnotationFqn).append('\n');
         }
 
-        if (settings.isSyncDisplayName() && (findClass(project, testClass, TestDisplayNames.DISPLAY_NAME_FQN) != null))
+        if (configuration.isSyncDisplayName()
+            && (findClass(project, testClass, TestDisplayNames.DISPLAY_NAME_FQN) != null))
         {
             methodText
                 .append('@').append(TestDisplayNames.DISPLAY_NAME_FQN)
@@ -276,13 +277,13 @@ public class CreateTestSiblingIntention
     }
 
     private static String resolveTestAnnotationFqn(
-        Project project, PsiClass testClass, TestInsanitySettings settings
+        Project project, PsiClass testClass, TestInsanityConfiguration configuration
     )
     {
         for (TestAnnotation testAnnotation : TEST_ANNOTATION_PREFERENCE)
         {
             if (
-                settings.hasTestAnnotation(testAnnotation)
+                configuration.isTestAnnotationEnabled(testAnnotation)
                     && (findClass(project, testClass, testAnnotation.getPrimaryAnnotationFqn()) != null)
             )
             {

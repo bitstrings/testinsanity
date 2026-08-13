@@ -3,6 +3,8 @@ package org.bitstrings.idea.plugins.testinsanity.actions;
 import javax.swing.Icon;
 
 import org.bitstrings.idea.plugins.testinsanity.TestInsanityBundle;
+import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
+import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration.Key;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,8 +36,11 @@ public class TestInsanityEnablerAction
             return;
         }
 
-        boolean refactoringEnabled = TestInsanitySettings.getInstance(event.getProject()).isRefactoringEnabled();
+        TestInsanityConfiguration configuration = TestInsanityConfiguration.getInstance(event.getProject());
 
+        boolean refactoringEnabled = configuration.isRefactoringEnabled();
+
+        event.getPresentation().setEnabled(!configuration.isGovernedByProjectConfig(Key.REFACTORING));
         event.getPresentation().setIcon(refactoringEnabled ? ON : OFF);
         event.getPresentation().setSelectedIcon(refactoringEnabled ? ON_SELECTED : OFF);
         event.getPresentation().setText(TestInsanityBundle.message("testinsanity.action.enabler.title"));

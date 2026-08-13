@@ -3,7 +3,7 @@ package org.bitstrings.idea.plugins.testinsanity;
 import java.util.Collection;
 import java.util.Map;
 
-import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
 import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -23,7 +23,7 @@ public class TestClassAutomaticRenamerFactory
     public boolean isApplicable(PsiElement element)
     {
         return TestElementAdapters.isClass(element)
-            && TestInsanitySettings.getInstance(element.getProject()).isRefactoringEnabled();
+            && TestInsanityConfiguration.getInstance(element.getProject()).isRefactoringEnabled();
     }
 
     @Override
@@ -51,7 +51,7 @@ public class TestClassAutomaticRenamerFactory
 
         AutomaticTestRenamer renamer =
             new AutomaticTestRenamer(
-                TestRenameKind.CLASS, TestInsanitySettings.getInstance(project).isRenamingDialogEnabled());
+                TestRenameKind.CLASS, TestInsanityConfiguration.getInstance(project).isPreselectRenames());
 
         PsiClass elementClass = TestElementAdapters.asClass(element, element.getResolveScope());
 

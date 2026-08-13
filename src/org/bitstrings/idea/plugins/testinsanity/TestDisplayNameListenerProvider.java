@@ -2,7 +2,7 @@ package org.bitstrings.idea.plugins.testinsanity;
 
 import java.util.Objects;
 
-import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
 import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 import org.bitstrings.idea.plugins.testinsanity.util.TestDisplayNames;
 
@@ -24,7 +24,7 @@ public class TestDisplayNameListenerProvider
     @Override
     public RefactoringElementListener getListener(PsiElement element)
     {
-        if (!TestInsanitySettings.getInstance(element.getProject()).isSyncDisplayName())
+        if (!TestInsanityConfiguration.getInstance(element.getProject()).isSyncDisplayName())
         {
             return null;
         }

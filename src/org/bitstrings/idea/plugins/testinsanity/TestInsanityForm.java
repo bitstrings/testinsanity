@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComponent;
 import javax.swing.JComboBox;
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
@@ -14,6 +15,9 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 
 import org.apache.commons.lang3.StringUtils;
+import org.bitstrings.idea.plugins.testinsanity.config.ProjectConfigParser;
+import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
+import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration.Key;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings.TestAnnotation;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher.CapitalizationScheme;
@@ -55,9 +59,12 @@ public final class TestInsanityForm
 
     private final TestInsanitySettings settings;
 
-    public TestInsanityForm(TestInsanitySettings settings)
+    private final TestInsanityConfiguration configuration;
+
+    public TestInsanityForm(TestInsanitySettings settings, TestInsanityConfiguration configuration)
     {
         this.settings = settings;
+        this.configuration = configuration;
 
         init();
 
@@ -129,83 +136,178 @@ public final class TestInsanityForm
 
     public void init()
     {
-        testAnnotationJunit4CheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.JUNIT4));
-        testAnnotationJunit5CheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.JUNIT5));
-        testAnnotationTestNgCheckBox.setSelected(settings.hasTestAnnotation(TestAnnotation.TESTNG));
-        testClassPatternTextField.setText(formatPatterns(settings.resolveTestClassPatterns()));
-        testMethodNamePatternTextField.setText(formatPatterns(settings.resolveTestMethodNamePatterns()));
+        testAnnotationJunit4CheckBox.setSelected(configuration.isTestAnnotationEnabled(TestAnnotation.JUNIT4));
+        testAnnotationJunit5CheckBox.setSelected(configuration.isTestAnnotationEnabled(TestAnnotation.JUNIT5));
+        testAnnotationTestNgCheckBox.setSelected(configuration.isTestAnnotationEnabled(TestAnnotation.TESTNG));
+        testClassPatternTextField.setText(formatPatterns(configuration.getTestClassPatterns()));
+        testMethodNamePatternTextField.setText(formatPatterns(configuration.getTestMethodPatterns()));
         testMethodNameCapSchemeOnlyIfPrefixedRadio
-            .setSelected(settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.IF_PREFIXED);
+            .setSelected(configuration.getCapitalizationScheme() == CapitalizationScheme.IF_PREFIXED);
         testMethodNameCapSchemeAlwaysRadio
-            .setSelected(settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.ALWAYS);
+            .setSelected(configuration.getCapitalizationScheme() == CapitalizationScheme.ALWAYS);
         testMethodNameCapSchemeUnchangedRadio
-            .setSelected(settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.UNCHANGED);
-        enableRefactoringSupportCheckBox.setSelected(settings.isRefactoringEnabled());
-        enableNavigationCheckBox.setSelected(settings.isNavigationEnabled());
-        showRenamingDialogCheckBox.setSelected(settings.isRenamingDialogEnabled());
-        showGutterAnnotationCheckBox.setSelected(settings.isGutterAnnotationEnabled());
-        includeInheritedMethodsCheckBox.setSelected(settings.isIncludeInheritedMethods());
-        includeInterfacesAbstractsCheckBox.setSelected(settings.isIncludeInterfacesAbstracts());
-        includeNestedClassesCheckBox.setSelected(settings.isIncludeNestedClasses());
-        syncDisplayNameCheckBox.setSelected(settings.isSyncDisplayName());
+            .setSelected(configuration.getCapitalizationScheme() == CapitalizationScheme.UNCHANGED);
+        enableRefactoringSupportCheckBox.setSelected(configuration.isRefactoringEnabled());
+        enableNavigationCheckBox.setSelected(configuration.isNavigationEnabled());
+        showRenamingDialogCheckBox.setSelected(configuration.isPreselectRenames());
+        showGutterAnnotationCheckBox.setSelected(configuration.isGutterIconsEnabled());
+        includeInheritedMethodsCheckBox.setSelected(configuration.isIncludeInheritedMethods());
+        includeInterfacesAbstractsCheckBox.setSelected(configuration.isIncludeInterfacesAbstracts());
+        includeNestedClassesCheckBox.setSelected(configuration.isIncludeNestedClasses());
+        syncDisplayNameCheckBox.setSelected(configuration.isSyncDisplayName());
+
+        lockGoverned(Key.TEST_CLASS_PATTERNS, testClassPatternTextField);
+        lockGoverned(Key.TEST_METHOD_PATTERNS, testMethodNamePatternTextField);
+        lockGoverned(
+            Key.CAPITALIZE_SUBJECT, testMethodNameCapSchemeOnlyIfPrefixedRadio,
+            testMethodNameCapSchemeAlwaysRadio, testMethodNameCapSchemeUnchangedRadio);
+        lockGoverned(
+            Key.TEST_ANNOTATIONS, testAnnotationJunit4CheckBox, testAnnotationJunit5CheckBox,
+            testAnnotationTestNgCheckBox);
+        lockGoverned(Key.INCLUDE_INHERITED_METHODS, includeInheritedMethodsCheckBox);
+        lockGoverned(Key.INCLUDE_INTERFACES_AND_ABSTRACTS, includeInterfacesAbstractsCheckBox);
+        lockGoverned(Key.INCLUDE_NESTED_CLASSES, includeNestedClassesCheckBox);
+        lockGoverned(Key.SYNC_DISPLAY_NAME, syncDisplayNameCheckBox);
+        lockGoverned(Key.REFACTORING, enableRefactoringSupportCheckBox);
+        lockGoverned(Key.NAVIGATION, enableNavigationCheckBox);
+        lockGoverned(Key.GUTTER_ICONS, showGutterAnnotationCheckBox);
+        lockGoverned(Key.PRESELECT_RENAMES, showRenamingDialogCheckBox);
+    }
+
+    private void lockGoverned(Key key, JComponent... components)
+    {
+        if (isEditable(key))
+        {
+            return;
+        }
+
+        String governedBy =
+            TestInsanityBundle.message("testinsanity.config.governed", ProjectConfigParser.FILE_NAME);
+
+        for (JComponent component : components)
+        {
+            component.setEnabled(false);
+            component.setToolTipText(governedBy);
+        }
+    }
+
+    private boolean isEditable(Key key)
+    {
+        return !configuration.isGovernedByProjectConfig(key);
     }
 
     public void apply()
     {
-        settings.setTestAnnotation(TestAnnotation.JUNIT4, testAnnotationJunit4CheckBox.isSelected());
-        settings.setTestAnnotation(TestAnnotation.JUNIT5, testAnnotationJunit5CheckBox.isSelected());
-        settings.setTestAnnotation(TestAnnotation.TESTNG, testAnnotationTestNgCheckBox.isSelected());
-
-        settings.updateTestClassPatterns(parsePatterns(testClassPatternTextField.getText()));
-
-        settings.updateTestMethodNamePatterns(parsePatterns(testMethodNamePatternTextField.getText()));
-
-        if (testMethodNameCapSchemeOnlyIfPrefixedRadio.isSelected())
+        if (isEditable(Key.TEST_ANNOTATIONS))
         {
-            settings.setTestMethodNameCapitalizationScheme(CapitalizationScheme.IF_PREFIXED);
-        }
-        else if (testMethodNameCapSchemeAlwaysRadio.isSelected())
-        {
-            settings.setTestMethodNameCapitalizationScheme(CapitalizationScheme.ALWAYS);
-        }
-        else if (testMethodNameCapSchemeUnchangedRadio.isSelected())
-        {
-            settings.setTestMethodNameCapitalizationScheme(CapitalizationScheme.UNCHANGED);
+            settings.setTestAnnotation(TestAnnotation.JUNIT4, testAnnotationJunit4CheckBox.isSelected());
+            settings.setTestAnnotation(TestAnnotation.JUNIT5, testAnnotationJunit5CheckBox.isSelected());
+            settings.setTestAnnotation(TestAnnotation.TESTNG, testAnnotationTestNgCheckBox.isSelected());
         }
 
-        settings.setRefactoringEnabled(enableRefactoringSupportCheckBox.isSelected());
-        settings.setNavigationEnabled(enableNavigationCheckBox.isSelected());
-        settings.setRenamingDialogEnabled(showRenamingDialogCheckBox.isSelected());
-        settings.setGutterAnnotationEnabled(showGutterAnnotationCheckBox.isSelected());
-        settings.setIncludeInheritedMethods(includeInheritedMethodsCheckBox.isSelected());
-        settings.setIncludeInterfacesAbstracts(includeInterfacesAbstractsCheckBox.isSelected());
-        settings.setIncludeNestedClasses(includeNestedClassesCheckBox.isSelected());
-        settings.setSyncDisplayName(syncDisplayNameCheckBox.isSelected());
+        if (isEditable(Key.TEST_CLASS_PATTERNS))
+        {
+            settings.updateTestClassPatterns(parsePatterns(testClassPatternTextField.getText()));
+        }
+
+        if (isEditable(Key.TEST_METHOD_PATTERNS))
+        {
+            settings.updateTestMethodNamePatterns(parsePatterns(testMethodNamePatternTextField.getText()));
+        }
+
+        if (isEditable(Key.CAPITALIZE_SUBJECT))
+        {
+            if (testMethodNameCapSchemeOnlyIfPrefixedRadio.isSelected())
+            {
+                settings.setTestMethodNameCapitalizationScheme(CapitalizationScheme.IF_PREFIXED);
+            }
+            else if (testMethodNameCapSchemeAlwaysRadio.isSelected())
+            {
+                settings.setTestMethodNameCapitalizationScheme(CapitalizationScheme.ALWAYS);
+            }
+            else if (testMethodNameCapSchemeUnchangedRadio.isSelected())
+            {
+                settings.setTestMethodNameCapitalizationScheme(CapitalizationScheme.UNCHANGED);
+            }
+        }
+
+        if (isEditable(Key.REFACTORING))
+        {
+            settings.setRefactoringEnabled(enableRefactoringSupportCheckBox.isSelected());
+        }
+
+        if (isEditable(Key.NAVIGATION))
+        {
+            settings.setNavigationEnabled(enableNavigationCheckBox.isSelected());
+        }
+
+        if (isEditable(Key.PRESELECT_RENAMES))
+        {
+            settings.setRenamingDialogEnabled(showRenamingDialogCheckBox.isSelected());
+        }
+
+        if (isEditable(Key.GUTTER_ICONS))
+        {
+            settings.setGutterAnnotationEnabled(showGutterAnnotationCheckBox.isSelected());
+        }
+
+        if (isEditable(Key.INCLUDE_INHERITED_METHODS))
+        {
+            settings.setIncludeInheritedMethods(includeInheritedMethodsCheckBox.isSelected());
+        }
+
+        if (isEditable(Key.INCLUDE_INTERFACES_AND_ABSTRACTS))
+        {
+            settings.setIncludeInterfacesAbstracts(includeInterfacesAbstractsCheckBox.isSelected());
+        }
+
+        if (isEditable(Key.INCLUDE_NESTED_CLASSES))
+        {
+            settings.setIncludeNestedClasses(includeNestedClassesCheckBox.isSelected());
+        }
+
+        if (isEditable(Key.SYNC_DISPLAY_NAME))
+        {
+            settings.setSyncDisplayName(syncDisplayNameCheckBox.isSelected());
+        }
     }
 
     public boolean isModified()
     {
-        return (!Objects.equals(
-                parsePatterns(testClassPatternTextField.getText()), settings.resolveTestClassPatterns()))
-            || (!Objects.equals(
-                parsePatterns(testMethodNamePatternTextField.getText()), settings.resolveTestMethodNamePatterns()))
-            || (testMethodNameCapSchemeOnlyIfPrefixedRadio
-                .isSelected() != (settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.IF_PREFIXED))
-            || (testMethodNameCapSchemeAlwaysRadio
-                .isSelected() != (settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.ALWAYS))
-            || (testMethodNameCapSchemeUnchangedRadio
-                .isSelected() != (settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.UNCHANGED))
-            || (testAnnotationJunit4CheckBox.isSelected() != settings.hasTestAnnotation(TestAnnotation.JUNIT4))
-            || (testAnnotationJunit5CheckBox.isSelected() != settings.hasTestAnnotation(TestAnnotation.JUNIT5))
-            || (testAnnotationTestNgCheckBox.isSelected() != settings.hasTestAnnotation(TestAnnotation.TESTNG))
-            || (enableRefactoringSupportCheckBox.isSelected() != settings.isRefactoringEnabled())
-            || (enableNavigationCheckBox.isSelected() != settings.isNavigationEnabled())
-            || (showRenamingDialogCheckBox.isSelected() != settings.isRenamingDialogEnabled())
-            || (showGutterAnnotationCheckBox.isSelected() != settings.isGutterAnnotationEnabled())
-            || (includeInheritedMethodsCheckBox.isSelected() != settings.isIncludeInheritedMethods())
-            || (includeInterfacesAbstractsCheckBox.isSelected() != settings.isIncludeInterfacesAbstracts())
-            || (includeNestedClassesCheckBox.isSelected() != settings.isIncludeNestedClasses())
-            || (syncDisplayNameCheckBox.isSelected() != settings.isSyncDisplayName());
+        return (isEditable(Key.TEST_CLASS_PATTERNS)
+                && !Objects.equals(
+                    parsePatterns(testClassPatternTextField.getText()), settings.resolveTestClassPatterns()))
+            || (isEditable(Key.TEST_METHOD_PATTERNS)
+                && !Objects.equals(
+                    parsePatterns(testMethodNamePatternTextField.getText()),
+                    settings.resolveTestMethodNamePatterns()))
+            || (isEditable(Key.CAPITALIZE_SUBJECT)
+                && ((testMethodNameCapSchemeOnlyIfPrefixedRadio.isSelected()
+                        != (settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.IF_PREFIXED))
+                    || (testMethodNameCapSchemeAlwaysRadio.isSelected()
+                        != (settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.ALWAYS))
+                    || (testMethodNameCapSchemeUnchangedRadio.isSelected()
+                        != (settings.getTestMethodNameCapitalizationScheme() == CapitalizationScheme.UNCHANGED))))
+            || (isEditable(Key.TEST_ANNOTATIONS)
+                && ((testAnnotationJunit4CheckBox.isSelected() != settings.hasTestAnnotation(TestAnnotation.JUNIT4))
+                    || (testAnnotationJunit5CheckBox.isSelected() != settings.hasTestAnnotation(TestAnnotation.JUNIT5))
+                    || (testAnnotationTestNgCheckBox.isSelected() != settings.hasTestAnnotation(TestAnnotation.TESTNG))))
+            || (isEditable(Key.REFACTORING)
+                && (enableRefactoringSupportCheckBox.isSelected() != settings.isRefactoringEnabled()))
+            || (isEditable(Key.NAVIGATION)
+                && (enableNavigationCheckBox.isSelected() != settings.isNavigationEnabled()))
+            || (isEditable(Key.PRESELECT_RENAMES)
+                && (showRenamingDialogCheckBox.isSelected() != settings.isRenamingDialogEnabled()))
+            || (isEditable(Key.GUTTER_ICONS)
+                && (showGutterAnnotationCheckBox.isSelected() != settings.isGutterAnnotationEnabled()))
+            || (isEditable(Key.INCLUDE_INHERITED_METHODS)
+                && (includeInheritedMethodsCheckBox.isSelected() != settings.isIncludeInheritedMethods()))
+            || (isEditable(Key.INCLUDE_INTERFACES_AND_ABSTRACTS)
+                && (includeInterfacesAbstractsCheckBox.isSelected() != settings.isIncludeInterfacesAbstracts()))
+            || (isEditable(Key.INCLUDE_NESTED_CLASSES)
+                && (includeNestedClassesCheckBox.isSelected() != settings.isIncludeNestedClasses()))
+            || (isEditable(Key.SYNC_DISPLAY_NAME)
+                && (syncDisplayNameCheckBox.isSelected() != settings.isSyncDisplayName()));
     }
 
     private static List<String> parsePatterns(String patternsText)

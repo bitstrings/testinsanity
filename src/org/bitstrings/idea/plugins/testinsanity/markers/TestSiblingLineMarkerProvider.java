@@ -11,7 +11,7 @@ import javax.swing.Icon;
 import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.TestInsanityBundle;
-import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
 import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
 
@@ -81,7 +81,7 @@ public class TestSiblingLineMarkerProvider
             return;
         }
 
-        if (!TestInsanitySettings.getInstance(element.getProject()).isGutterAnnotationEnabled())
+        if (!TestInsanityConfiguration.getInstance(element.getProject()).isGutterIconsEnabled())
         {
             return;
         }
@@ -172,7 +172,8 @@ public class TestSiblingLineMarkerProvider
 
         RenameTestService renameTestService = RenameTestService.getInstance(project);
 
-        boolean annotationCheckEnabled = !TestInsanitySettings.getInstance(project).getTestAnnotations().isEmpty();
+        boolean annotationCheckEnabled =
+            !TestInsanityConfiguration.getInstance(project).getTestAnnotationFqns().isEmpty();
 
         PsiClass testClass = renameTestService.resolveTestClass(ownerMethod);
 

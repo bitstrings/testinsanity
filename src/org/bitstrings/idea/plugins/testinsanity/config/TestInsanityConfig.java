@@ -50,7 +50,7 @@ public class TestInsanityConfig
     public JComponent createComponent()
     {
         settings = TestInsanitySettings.getInstance(project);
-        form = new TestInsanityForm(settings);
+        form = new TestInsanityForm(settings, TestInsanityConfiguration.getInstance(project));
 
         return form.getSettingsPanel();
     }

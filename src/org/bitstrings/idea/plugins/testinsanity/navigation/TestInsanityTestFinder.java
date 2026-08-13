@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
-import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings;
+import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
 import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 
 import com.intellij.psi.PsiClass;
@@ -86,7 +86,7 @@ public class TestInsanityTestFinder
 
     private static PsiClass findEnabledClass(PsiElement element)
     {
-        return TestInsanitySettings.getInstance(element.getProject()).isNavigationEnabled()
+        return TestInsanityConfiguration.getInstance(element.getProject()).isNavigationEnabled()
             ? findContainingClass(element)
             : null;
     }
