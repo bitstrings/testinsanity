@@ -13,7 +13,6 @@ import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -24,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
@@ -278,23 +276,9 @@ public final class RenameTestService
         configurationTracker.incModificationCount();
     }
 
-    @SuppressWarnings("deprecation")
     private void restartHighlighting()
     {
-        // restart(Object) replaces this overload but only exists from 262.9; verifyPlugin fails on 243-262 with it.
-        DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-
-        PsiManager psiManager = PsiManager.getInstance(project);
-
-        for (VirtualFile openFile : FileEditorManager.getInstance(project).getOpenFiles())
-        {
-            PsiFile openPsiFile = psiManager.findFile(openFile);
-
-            if (openPsiFile != null)
-            {
-                daemonCodeAnalyzer.restart(openPsiFile);
-            }
-        }
+        DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }
 
     public GlobalSearchScope getSearchScope(PsiElement element)
