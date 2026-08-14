@@ -44,17 +44,41 @@
       <img src="https://raw.githubusercontent.com/bitstrings/testinsanity/master/docs/gutter_class.png" alt="Gutter icon linking a class to its test class"/><br/>
       <i>Every class links to its test class, and a test with no subject gets an icon of its own.</i><br/>
       <br/>
-      Also handles JUnit 4, JUnit 5 and TestNG including nested, parameterized and templated tests, any
-      annotation composed of theirs, a house annotation named outright or by package wildcard, Kotlin with
-      backtick test names (optional dependency, K2 ready), inherited and abstract test classes, and optional
-      @DisplayName generation and sync.<br/>
+      Also handles nested, parameterized and templated JUnit 5 tests, your own annotation composed of
+      <code>@Test</code>, Kotlin backtick test names, tests in a module of their own, inherited and abstract
+      test classes, and optional <code>@DisplayName</code> sync.<br/>
       <br/>
       Configured per project under <b>Settings -&gt; Tools -&gt; TestInsanity</b>.<br/>
+      <br/>
+      If it saves you time, please
+      <a href="https://plugins.jetbrains.com/plugin/13860-testinsanity/reviews">leave a review</a> &mdash; it is
+      what helps other people find it.<br/>
       <br/>
       <a href="https://github.com/bitstrings/testinsanity/issues">Report an issue</a>
     ]]></description>
 
     <change-notes><![CDATA[
+      <b>v2.0.1</b><br/>
+      <br/>
+      <b>Fixed</b><br/>
+      <ul>
+        <li>Renaming a method also renamed a test belonging to a longer-named method: with subjects
+            <code>abc</code> and <code>abcd</code>, renaming <code>abc</code> rewrote
+            <code>testAbcd</code> as well. A test is now only ever attributed to the subject it
+            resolves to, and shorter names were affected the same way.</li>
+        <li>The Use .testinsanity.json checkbox reverted on every click, so the mechanism could not be
+            switched off for the IDE.</li>
+      </ul>
+      <b>Changed</b><br/>
+      <ul>
+        <li>A new install starts with two schemes, <code>default</code> for <code>${className}Test</code>
+            and <code>it</code> for <code>${className}IT</code>, each matching
+            <code>test${subjectName}*</code>, <code>${subjectName}_+</code> and <code>${subjectName}</code>.
+            An existing configuration is untouched.</li>
+        <li>The settings group the name, class pattern and method patterns in a box titled with the
+            selected scheme, so it is clear which scheme they belong to.</li>
+      </ul>
+      <br/>
       <b>v2.0.0</b><br/>
       <br/>
       <b>New</b><br/>
