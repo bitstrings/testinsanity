@@ -18,11 +18,15 @@
 *.jspx          text
 *.properties    text
 *.sh            text    eol=lf
+*.bash          text    eol=lf
 *.tld           text
 *.txt           text
 *.tag           text
 *.tagx          text
 *.xml           text
+*.cmd           text    eol=crlf
+*.bat           text    eol=crlf
+*.ps1           text    eol=crlf
 
 # These files are binary and should be left untouched
 # (binary is a macro for -text -diff)
@@ -38,8 +42,13 @@
 *.so            binary
 *.war           binary
 *.zip           binary
+*.gzip          binary
+*.gz            binary
+*.bzip2         binary
+*.bz2           binary
 *.xz            binary
 *.tar           binary
 *.tar.gz        binary
 *.tar.bz2       binary
 *.tar.xz        binary
+*.7z            binary
