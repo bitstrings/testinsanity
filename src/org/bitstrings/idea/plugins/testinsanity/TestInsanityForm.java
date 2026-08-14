@@ -344,7 +344,7 @@ public final class TestInsanityForm
 
         init();
 
-        useProjectConfigCheckBox.addItemListener(event -> init());
+        useProjectConfigCheckBox.addItemListener(event -> displaySettings());
         projectConfigLink.addHyperlinkListener(event -> openOrCreateProjectConfig());
     }
 
@@ -357,6 +357,11 @@ public final class TestInsanityForm
     {
         useProjectConfigCheckBox.setSelected(settings.isUseProjectConfig());
 
+        displaySettings();
+    }
+
+    private void displaySettings()
+    {
         ProjectConfig projectConfig = configuration.getProjectConfig();
 
         testAnnotationJunit4CheckBox.setSelected(displayedTestAnnotation(TestAnnotation.JUNIT4));

@@ -4,58 +4,58 @@
     <vendor email="pino.silvaggio@gmail.com" url="https://github.com/bitstrings/testinsanity">bitstrings.org</vendor>
 
     <description><![CDATA[
-      <b>Keep tests and the code they test in sync.</b><br/>
+      <b>Rename a class and its tests are renamed with it.</b> Jump from a method straight to the method that
+      tests it. TestInsanity learns your naming convention instead of guessing at it.<br/>
       <br/>
-      Rename a subject and its tests follow. Rename a test and its subject follows. Jump between the
-      two, and see in the gutter which methods have a test and which do not.<br/>
+      <img src="https://raw.githubusercontent.com/bitstrings/testinsanity/master/docs/rename-dialog.png" alt="Renaming a subject proposes the matching test class and test methods"/><br/>
+      <i>Rename the subject, and the matching test class and test methods are proposed with their new names.</i><br/>
       <br/>
-      TestInsanity reads your convention from a pattern instead of guessing at it:<br/>
+      <b>Why not just Navigate -&gt; Test?</b><br/>
+      Because it guesses one hardcoded class name and stops there. TestInsanity works from a convention you
+      declare, matches <i>methods</i> as well as classes, goes in both directions, and carries renames
+      through.<br/>
       <br/>
       <code>&nbsp;&nbsp;${className}Test</code> &nbsp; maps <code>Color</code> to <code>ColorTest</code><br/>
-      <code>&nbsp;&nbsp;(test|)${subjectName}*</code> &nbsp; maps <code>isDarkColor()</code> to
+      <code>&nbsp;&nbsp;test${subjectName}*</code> &nbsp; maps <code>isDarkColor()</code> to
       <code>testIsDarkColor_whenBlack()</code><br/>
       <br/>
-      A scheme binds one test class convention to the test method conventions used inside it, and several
-      schemes are tried in order, so unit tests under <code>${className}Test</code>, integration tests under
-      <code>${className}IT</code> and specs under <code>${className}Spec</code> coexist in one project, each
-      with its own method naming.<br/>
+      Nothing to set up: <code>${className}Test</code> and <code>${className}IT</code> are configured on
+      install. Each scheme binds one class convention to the method conventions used inside it, and schemes are
+      tried in order &mdash; so unit tests, integration tests and specs coexist in one project, each with its
+      own method naming.<br/>
       <br/>
-      <b>What it does</b>
       <ul>
-        <li><b>Renaming, both ways</b> &mdash; subject class to test classes, test class to subject,
-            subject method to test methods, test method to subject. Proposed renames appear in the
-            standard Rename related items dialog, so you can deselect any of them.</li>
-        <li><b>Navigation</b> &mdash; Go To -&gt; Jump to Sibling (CTRL+ALT+` by default) moves between a
-            method and its test method, not only between their classes. Navigate -&gt; Test (CTRL+SHIFT+T by
-            default) follows the same scheme.</li>
-        <li><b>Gutter icons</b> &mdash; the sibling class or method, its JUnit 5 DisplayName when it
-            has one, and a distinct icon for a test with no subject.</li>
-        <li><b>Create what is missing</b> &mdash; Alt+Enter on a subject creates the test class, or the test
-            method carrying the right framework annotation, one entry per scheme still missing its class. On a
-            test, the same key creates the subject class it has no counterpart for (Java sources).</li>
-        <li><b>Configuration in version control</b> &mdash; a <code>.testinsanity.json</code> at the project
-            root pins the scheme for everyone, the way .editorconfig does, so nothing needs to live in
-            <code>.idea</code>. Whatever the file leaves out stays a personal preference, and the file itself
-            gets completion, documentation and validation as you type. One click in the settings creates it
-            from the settings you already have.</li>
+        <li><b>Renaming, both ways</b> &mdash; subject class to test classes, test class to subject, subject
+            method to test methods, test method to subject. Renames appear in the standard Rename related items
+            dialog, so you can deselect any of them.</li>
+        <li><b>Navigation to the method</b> &mdash; Jump to Sibling (CTRL+ALT+`) moves between a method and its
+            test method, not only between their classes. Navigate -&gt; Test (CTRL+SHIFT+T) follows the same
+            scheme.</li>
+        <li><b>Gutter icons</b> &mdash; at the class and at the method, the sibling on the other side, its
+            JUnit 5 DisplayName when it has one, and a distinct icon for a test with no subject.</li>
+        <li><b>Alt+Enter creates what is missing</b> &mdash; the test class, or the test method with the right
+            framework annotation, one entry per scheme. On a test, the same key creates the subject. New classes
+            land in the correct test root, including when tests live in a module of their own.</li>
+        <li><b>Your convention in version control</b> &mdash; a <code>.testinsanity.json</code> at the project
+            root pins the scheme for the whole team, the way .editorconfig does. Keys it declares win and show
+            as disabled in the settings; keys it omits stay personal. It is re-read on every change, including
+            branch switches, and gets completion, documentation and validation as you type. One click creates
+            it from the settings you already have.</li>
       </ul>
-      <b>Built for real projects</b>
-      <ul>
-        <li>JUnit 4, JUnit 5 &mdash; including nested, parameterized and templated tests &mdash; and TestNG,
-            plus any annotation composed of theirs and any you declare yourself</li>
-        <li>Java and Kotlin; Kotlin support is optional, and the plugin works without it</li>
-        <li>Kotlin backtick test names, since patterns accept spaces</li>
-        <li>Tests in a module of their own, resolved in both directions</li>
-        <li>Abstract or inherited test classes</li>
-      </ul>
-      Everything is configured per project under <b>Settings -&gt; Tools -&gt; TestInsanity</b>.
-      Refactoring support toggles from the Tools menu, gutter icons from
-      <b>Settings -&gt; Editor -&gt; General -&gt; Gutter Icons</b>.<br/>
+      <img src="https://raw.githubusercontent.com/bitstrings/testinsanity/master/docs/gutter_method.png" alt="Gutter icon linking a method to the method that tests it"/><br/>
+      <i>Every method links to the method that tests it, and the ones with no test stay unmarked.</i><br/>
       <br/>
-      Please report issues:<br/>
-      <a href="https://github.com/bitstrings/testinsanity/issues">https://github.com/bitstrings/testinsanity/issues</a><br/>
+      <img src="https://raw.githubusercontent.com/bitstrings/testinsanity/master/docs/gutter_class.png" alt="Gutter icon linking a class to its test class"/><br/>
+      <i>Every class links to its test class, and a test with no subject gets an icon of its own.</i><br/>
       <br/>
-      <font size=-1><b>Pino Silvaggio</b></font>
+      Also handles JUnit 4, JUnit 5 and TestNG including nested, parameterized and templated tests, any
+      annotation composed of theirs, a house annotation named outright or by package wildcard, Kotlin with
+      backtick test names (optional dependency, K2 ready), inherited and abstract test classes, and optional
+      @DisplayName generation and sync.<br/>
+      <br/>
+      Configured per project under <b>Settings -&gt; Tools -&gt; TestInsanity</b>.<br/>
+      <br/>
+      <a href="https://github.com/bitstrings/testinsanity/issues">Report an issue</a>
     ]]></description>
 
     <change-notes><![CDATA[

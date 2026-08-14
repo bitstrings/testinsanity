@@ -124,7 +124,7 @@ public final class TestSchemes
         return testName;
     }
 
-    public String renameSubjectClassNameXXX(String subjectName, String oldTestName, String newTestName)
+    public String renameSubjectClassName(String subjectName, String oldTestName, String newTestName)
     {
         for (TestScheme scheme : schemes)
         {

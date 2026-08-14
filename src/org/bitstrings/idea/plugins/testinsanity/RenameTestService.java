@@ -161,7 +161,7 @@ public final class RenameTestService
         }
 
         String newSubjectName =
-            schemes.renameSubjectClassNameXXX(subjectClass.getName(), testClass.getName(), newTestName);
+            schemes.renameSubjectClassName(subjectClass.getName(), testClass.getName(), newTestName);
 
         if (StringUtils.isEmpty(newSubjectName))
         {

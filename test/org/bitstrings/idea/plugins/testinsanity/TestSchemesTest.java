@@ -51,21 +51,21 @@ public class TestSchemesTest
     }
 
     @Test
-    public void renameSubjectClassNameXXX_testNameMatchingNoScheme_keepsTheNewTestName()
+    public void renameSubjectClassName_testNameMatchingNoScheme_keepsTheNewTestName()
     {
         TestSchemes schemes = unitAndIntegrationSchemes();
 
-        String renamed = schemes.renameSubjectClassNameXXX("Color", "ColorSpec", "PaintSpec");
+        String renamed = schemes.renameSubjectClassName("Color", "ColorSpec", "PaintSpec");
 
         assertEquals("PaintSpec", renamed);
     }
 
     @Test
-    public void renameSubjectClassNameXXX_testNameMatchingAScheme_stripsTheSuffix()
+    public void renameSubjectClassName_testNameMatchingAScheme_stripsTheSuffix()
     {
         TestSchemes schemes = unitAndIntegrationSchemes();
 
-        String renamed = schemes.renameSubjectClassNameXXX("Color", "ColorIT", "PaintIT");
+        String renamed = schemes.renameSubjectClassName("Color", "ColorIT", "PaintIT");
 
         assertEquals("Paint", renamed);
     }

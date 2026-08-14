@@ -1,10 +1,13 @@
 package org.bitstrings.idea.plugins.testinsanity;
 
 import java.awt.Component;
+import java.awt.Container;
 
+import javax.swing.JCheckBox;
 import javax.swing.JScrollPane;
 import javax.swing.Scrollable;
 
+import org.bitstrings.idea.plugins.testinsanity.config.ProjectConfigParser;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfig;
 
 import com.intellij.openapi.options.ex.ConfigurableCardPanel;
@@ -51,6 +54,45 @@ public class TestInsanityFormTest
                 + "; without Configurable.NoMargin the platform buries the page under a wrapper panel and the"
                 + " viewport can no longer size it to its own width",
             tracksViewportWidth);
+    }
+
+    public void testUseProjectConfigCheckBox_toggled_keepsTheNewSelection()
+    {
+        JCheckBox useProjectConfig = useProjectConfigCheckBox(settingsPane());
+
+        boolean initiallySelected = useProjectConfig.isSelected();
+
+        useProjectConfig.doClick();
+
+        assertEquals(
+            "the checkbox reverted to its stored value, so the setting cannot be changed",
+            !initiallySelected,
+            useProjectConfig.isSelected());
+    }
+
+    private static JCheckBox useProjectConfigCheckBox(Container root)
+    {
+        String label = TestInsanityBundle.message("testinsanity.config.use", ProjectConfigParser.FILE_NAME);
+
+        for (Component component : root.getComponents())
+        {
+            if ((component instanceof JCheckBox) && label.equals(((JCheckBox) component).getText()))
+            {
+                return (JCheckBox) component;
+            }
+
+            if (component instanceof Container)
+            {
+                JCheckBox found = useProjectConfigCheckBox((Container) component);
+
+                if (found != null)
+                {
+                    return found;
+                }
+            }
+        }
+
+        return null;
     }
 
     private JScrollPane settingsPane()
