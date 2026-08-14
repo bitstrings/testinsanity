@@ -142,6 +142,31 @@ public final class TestInsanitySettings
         }
     }
 
+    @Override
+    public void noStateLoaded()
+    {
+        schemes.addAll(defaultSchemes());
+    }
+
+    private static List<TestSchemeSpec> defaultSchemes()
+    {
+        List<String> testMethods =
+            List.of(
+                PatternBasedTestMethodSiblingMediator.PREFIXED_METHOD_NAME_PATTERN,
+                PatternBasedTestMethodSiblingMediator.SUFFIXED_METHOD_NAME_PATTERN,
+                PatternBasedTestMethodSiblingMediator.EXACT_METHOD_NAME_PATTERN);
+
+        return List.of(
+            new TestSchemeSpec(
+                TestSchemeSpec.DEFAULT_NAME,
+                PatternBasedTestClassSiblingMediator.DEFAULT_TEST_CLASS_NAME_PATTERN,
+                testMethods),
+            new TestSchemeSpec(
+                TestSchemeSpec.INTEGRATION_NAME,
+                PatternBasedTestClassSiblingMediator.INTEGRATION_TEST_CLASS_NAME_PATTERN,
+                testMethods));
+    }
+
     public void setTestAnnotation(TestAnnotation annotation, boolean enabled)
     {
         if (enabled)

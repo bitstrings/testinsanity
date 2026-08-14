@@ -29,6 +29,51 @@ public class TestInsanitySettingsTest
     }
 
     @Test
+    public void noStateLoaded_freshInstall_seedsTheDefaultScheme()
+    {
+        TestInsanitySettings settings = new TestInsanitySettings();
+
+        settings.noStateLoaded();
+
+        TestSchemeSpec scheme = settings.resolveSchemes().get(0);
+
+        assertEquals(TestSchemeSpec.DEFAULT_NAME, scheme.name);
+        assertEquals("${className}Test", scheme.testClass);
+        assertEquals(
+            List.of("test${subjectName}*", "${subjectName}_+", "${subjectName}"), scheme.testMethods);
+    }
+
+    @Test
+    public void noStateLoaded_freshInstall_seedsTheIntegrationScheme()
+    {
+        TestInsanitySettings settings = new TestInsanitySettings();
+
+        settings.noStateLoaded();
+
+        TestSchemeSpec scheme = settings.resolveSchemes().get(1);
+
+        assertEquals(TestSchemeSpec.INTEGRATION_NAME, scheme.name);
+        assertEquals("${className}IT", scheme.testClass);
+        assertEquals(
+            List.of("test${subjectName}*", "${subjectName}_+", "${subjectName}"), scheme.testMethods);
+    }
+
+    @Test
+    public void loadState_stateWithoutSchemes_keepsTheStoredFlatPattern()
+    {
+        TestInsanitySettings persisted = new TestInsanitySettings();
+
+        persisted.testClassPattern = "Test${className}";
+
+        TestInsanitySettings settings = new TestInsanitySettings();
+
+        settings.loadState(persisted);
+
+        assertEquals(1, settings.resolveSchemes().size());
+        assertEquals("Test${className}", settings.resolveSchemes().get(0).testClass);
+    }
+
+    @Test
     public void resolveSchemes_legacyFlatLists_migrateWithEveryMethodPattern()
     {
         TestInsanitySettings settings = new TestInsanitySettings();

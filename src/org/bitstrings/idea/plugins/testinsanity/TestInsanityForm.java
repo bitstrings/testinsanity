@@ -23,6 +23,7 @@ import javax.swing.JViewport;
 import javax.swing.ListSelectionModel;
 import javax.swing.Scrollable;
 import javax.swing.SwingConstants;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
@@ -239,7 +240,7 @@ public final class TestInsanityForm
 
     private final JBTextField testClassPatternField = new JBTextField(FIELD_COLUMNS);
 
-    private final JBTextArea schemeMethodsLabel = wrappingText("");
+    private final TitledBorder schemeEditorBorder = IdeBorderFactory.createTitledBorder("");
 
     private final CollectionListModel<String> testMethodPatternsModel = new CollectionListModel<>();
 
@@ -310,6 +311,8 @@ public final class TestInsanityForm
 
     private final JPanel schemesPanel;
 
+    private final JPanel schemeEditorPanel;
+
     private final JPanel additionalAnnotationsPanel;
 
     private final JComponent settingsPanel;
@@ -324,7 +327,8 @@ public final class TestInsanityForm
         this.settings = settings;
         this.configuration = configuration;
 
-        this.schemesPanel = createSchemesPanel();
+        this.schemeEditorPanel = createSchemeEditorPanel();
+        this.schemesPanel = createSchemesPanel(schemeEditorPanel);
         this.additionalAnnotationsPanel = createAdditionalAnnotationsPanel();
 
         loadPresets();
@@ -566,25 +570,38 @@ public final class TestInsanityForm
         return panel;
     }
 
-    private JPanel createSchemesPanel()
+    private JPanel createSchemesPanel(JComponent schemeEditor)
     {
         JPanel panel =
             FormBuilder
                 .createFormBuilder()
                 .addComponent(createSchemesListPanel())
                 .addComponent(helpText(TestInsanityBundle.message("testinsanity.form.schemes.help")))
+                .addComponent(schemeEditor)
+                .getPanel();
+
+        panel.setBorder(
+            IdeBorderFactory.createTitledBorder(TestInsanityBundle.message("testinsanity.form.schemes.section")));
+
+        return panel;
+    }
+
+    private JPanel createSchemeEditorPanel()
+    {
+        JPanel panel =
+            FormBuilder
+                .createFormBuilder()
                 .addLabeledComponent(
                     TestInsanityBundle.message("testinsanity.form.schemes.name"), schemeNameField)
                 .addLabeledComponent(
                     TestInsanityBundle.message("testinsanity.form.schemes.class"), testClassPatternField)
                 .addComponent(helpText(TestInsanityBundle.message("testinsanity.form.schemes.class.help")))
-                .addComponent(schemeMethodsLabel)
+                .addComponent(wrappingText(TestInsanityBundle.message("testinsanity.form.schemes.methods")))
                 .addComponent(createTestMethodPatternsPanel())
                 .addComponent(helpText(TestInsanityBundle.message("testinsanity.form.schemes.methods.help")))
                 .getPanel();
 
-        panel.setBorder(
-            IdeBorderFactory.createTitledBorder(TestInsanityBundle.message("testinsanity.form.schemes.section")));
+        panel.setBorder(schemeEditorBorder);
 
         return panel;
     }
@@ -629,7 +646,7 @@ public final class TestInsanityForm
                 {
                     storeEditedScheme();
 
-                    updateSchemeMethodsLabel();
+                    updateSchemeEditorTitle();
 
                     schemesList.repaint();
                 }
@@ -798,7 +815,7 @@ public final class TestInsanityForm
             testClassPatternField.setText(scheme.testClass);
             testMethodPatternsModel.replaceAll(scheme.testMethods);
 
-            updateSchemeMethodsLabel();
+            updateSchemeEditorTitle();
         }
         finally
         {
@@ -806,14 +823,16 @@ public final class TestInsanityForm
         }
     }
 
-    private void updateSchemeMethodsLabel()
+    private void updateSchemeEditorTitle()
     {
         String schemeName = schemeNameField.getText().trim();
 
-        schemeMethodsLabel.setText(
+        schemeEditorBorder.setTitle(
             StringUtils.isBlank(schemeName)
-                ? TestInsanityBundle.message("testinsanity.form.schemes.methods.none")
-                : TestInsanityBundle.message("testinsanity.form.schemes.methods", schemeName));
+                ? TestInsanityBundle.message("testinsanity.form.schemes.editor.none")
+                : TestInsanityBundle.message("testinsanity.form.schemes.editor", schemeName));
+
+        schemeEditorPanel.repaint();
     }
 
     private void storeEditedScheme()

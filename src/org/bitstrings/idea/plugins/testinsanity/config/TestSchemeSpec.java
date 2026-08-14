@@ -10,6 +10,8 @@ public final class TestSchemeSpec
 {
     public static final String DEFAULT_NAME = "default";
 
+    public static final String INTEGRATION_NAME = "it";
+
     public String name;
 
     public String testClass;

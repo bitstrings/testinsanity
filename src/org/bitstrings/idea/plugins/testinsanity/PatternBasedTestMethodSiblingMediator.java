@@ -29,6 +29,12 @@ public class PatternBasedTestMethodSiblingMediator
 
     public static final String DEFAULT_METHOD_NAME_PATTERN = "(test|)${subjectName}*";
 
+    public static final String PREFIXED_METHOD_NAME_PATTERN = "test${subjectName}*";
+
+    public static final String SUFFIXED_METHOD_NAME_PATTERN = "${subjectName}_+";
+
+    public static final String EXACT_METHOD_NAME_PATTERN = DEFAULT_SUBJECT_NAME_TOKEN;
+
     private final String testMethodNamePattern;
 
     private final Set<String> testMethodAnnotations;
@@ -141,19 +147,23 @@ public class PatternBasedTestMethodSiblingMediator
     {
         Set<PsiMethod> testMethods = new LinkedHashSet<>();
 
+        List<String> subjectCandidates = subjectCandidates(subjectMethod);
+
         for (PsiClass testClass : testClasses)
         {
-            collectTestMethods(subjectMethod, testClass, testMethods);
+            collectTestMethods(subjectMethod, subjectCandidates, testClass, testMethods);
         }
 
         return new ArrayList<>(testMethods);
     }
 
-    protected void collectTestMethods(PsiMethod subjectMethod, PsiClass testClass, Set<PsiMethod> testMethods)
+    protected void collectTestMethods(
+        PsiMethod subjectMethod, List<String> subjectCandidates, PsiClass testClass, Set<PsiMethod> testMethods
+    )
     {
         for (PsiMethod method : (includeInheritedMethods ? testClass.getAllMethods() : testClass.getMethods()))
         {
-            if (checkMethodAnnotation(method, false) && matchesTestName(method.getName(), subjectMethod.getName()))
+            if (checkMethodAnnotation(method, false) && isTestOf(method.getName(), subjectMethod, subjectCandidates))
             {
                 testMethods.add(method);
             }
@@ -166,7 +176,7 @@ public class PatternBasedTestMethodSiblingMediator
 
         for (PsiClass nestedClass : testClass.getInnerClasses())
         {
-            collectTestMethods(subjectMethod, nestedClass, testMethods);
+            collectTestMethods(subjectMethod, subjectCandidates, nestedClass, testMethods);
         }
     }
 
@@ -179,12 +189,7 @@ public class PatternBasedTestMethodSiblingMediator
         }
 
         TestPatternMatchResult testNameParts =
-            testMethodPatternMatcher.findTestMatch(
-                testMethod.getName(),
-                Arrays.stream(
-                    includeInheritedMethods ? subjectClass.getAllMethods() : subjectClass.getMethods()
-                ).map(PsiMethod::getName).collect(toList())
-            );
+            testMethodPatternMatcher.findTestMatch(testMethod.getName(), subjectMethodNames(subjectClass));
 
         if (!testNameParts.isMatched())
         {
@@ -203,6 +208,31 @@ public class PatternBasedTestMethodSiblingMediator
     public boolean matchesTestName(String testName, String subjectName)
     {
         return testMethodPatternMatcher.findTestMatch(testName, subjectName).isMatched();
+    }
+
+    private boolean isTestOf(String testName, PsiMethod subjectMethod, List<String> subjectCandidates)
+    {
+        return subjectMethod
+            .getName()
+            .equals(testMethodPatternMatcher.findTestMatch(testName, subjectCandidates).getSubject());
+    }
+
+    private List<String> subjectCandidates(PsiMethod subjectMethod)
+    {
+        PsiClass subjectClass = subjectMethod.getContainingClass();
+
+        return (subjectClass == null)
+            ? List.of(subjectMethod.getName())
+            : subjectMethodNames(subjectClass);
+    }
+
+    private List<String> subjectMethodNames(PsiClass subjectClass)
+    {
+        return Arrays
+            .stream(includeInheritedMethods ? subjectClass.getAllMethods() : subjectClass.getMethods())
+            .map(PsiMethod::getName)
+            .distinct()
+            .collect(toList());
     }
 
     @Override

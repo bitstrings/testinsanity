@@ -28,6 +28,8 @@ public class PatternBasedTestClassSiblingMediator
 
     public static final String DEFAULT_TEST_CLASS_NAME_PATTERN = DEFAULT_TEST_CLASS_NAME_TOKEN + "Test";
 
+    public static final String INTEGRATION_TEST_CLASS_NAME_PATTERN = DEFAULT_TEST_CLASS_NAME_TOKEN + "IT";
+
 
     private final String testClassNamePattern;
 
