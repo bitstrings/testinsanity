@@ -27,4 +27,6 @@ public interface TestClassSiblingMediator
     PsiClass resolveTestClass(PsiClass candidateClass);
 
     String generateTestName(String subjectName);
+
+    String findSubjectName(String testName);
 }

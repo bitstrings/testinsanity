@@ -56,16 +56,6 @@ public class PatternBasedTestClassSiblingMediator
         this.includeAbstracts = includeAbstracts;
     }
 
-    public String getTestClassNamePattern()
-    {
-        return testClassNamePattern;
-    }
-
-    public TestPatternMatcher getTestClassPatternMatcher()
-    {
-        return testClassPatternMatcher;
-    }
-
     @Override
     public void validatePattern()
         throws TestPatternException
@@ -187,6 +177,12 @@ public class PatternBasedTestClassSiblingMediator
     public String generateTestName(String subjectName)
     {
         return testClassPatternMatcher.generateTestName(subjectName);
+    }
+
+    @Override
+    public String findSubjectName(String testName)
+    {
+        return testClassPatternMatcher.findSubjectName(testName);
     }
 
     protected boolean isTestClassName(String targetClassName)

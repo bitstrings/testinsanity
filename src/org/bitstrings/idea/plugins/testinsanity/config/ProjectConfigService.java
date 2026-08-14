@@ -7,8 +7,10 @@ import org.bitstrings.idea.plugins.testinsanity.TestInsanityBundle;
 
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -34,6 +36,18 @@ public final class ProjectConfigService
     {
         ProjectConfig currentConfig = config.get();
 
+        return (currentConfig == null) ? loadAndCache() : currentConfig;
+    }
+
+    public synchronized void invalidate()
+    {
+        config.set(null);
+    }
+
+    private synchronized ProjectConfig loadAndCache()
+    {
+        ProjectConfig currentConfig = config.get();
+
         if (currentConfig == null)
         {
             currentConfig = load();
@@ -44,11 +58,6 @@ public final class ProjectConfigService
         return currentConfig;
     }
 
-    public void invalidate()
-    {
-        config.set(null);
-    }
-
     public VirtualFile findConfigFile()
     {
         String basePath = project.getBasePath();
@@ -56,6 +65,41 @@ public final class ProjectConfigService
         return (basePath == null)
             ? null
             : LocalFileSystem.getInstance().findFileByPath(basePath + "/" + ProjectConfigParser.FILE_NAME);
+    }
+
+    public VirtualFile createConfigFile(String content)
+        throws IOException
+    {
+        String basePath = project.getBasePath();
+
+        if (basePath == null)
+        {
+            return null;
+        }
+
+        VirtualFile projectRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath);
+
+        if (projectRoot == null)
+        {
+            return null;
+        }
+
+        return WriteAction.computeAndWait(
+            () ->
+            {
+                VirtualFile existingFile = projectRoot.findChild(ProjectConfigParser.FILE_NAME);
+
+                VirtualFile configFile =
+                    (existingFile == null)
+                        ? projectRoot.createChildData(this, ProjectConfigParser.FILE_NAME)
+                        : existingFile;
+
+                VfsUtil.saveText(configFile, content);
+
+                invalidate();
+
+                return configFile;
+            });
     }
 
     public boolean isConfigFile(String path)
@@ -71,7 +115,7 @@ public final class ProjectConfigService
 
         if (configFile == null)
         {
-            return ProjectConfig.ABSENT;
+            return ProjectConfig.absent();
         }
 
         try
@@ -96,7 +140,7 @@ public final class ProjectConfigService
                 NotificationType.ERROR);
         }
 
-        return ProjectConfig.ABSENT;
+        return ProjectConfig.absent();
     }
 
     private void notify(String content, NotificationType type)

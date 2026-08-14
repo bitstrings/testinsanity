@@ -9,11 +9,47 @@
       "type": "string",
       "description": "Optional schema reference. The plugin binds this schema automatically, so it can be omitted."
     },
+    "schemes": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Naming schemes, tried in order, first match wins. A scheme binds one test class convention to the test method conventions used inside it, so unit, integration and end to end tests each keep their own naming.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "testClass", "testMethods"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Name of the scheme, unique within the file. It identifies the scheme in the settings dialog and in error messages.",
+            "examples": ["default", "unit", "it", "e2e"]
+          },
+          "testClass": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Test class name pattern. ${className} stands for the subject class name, and (a|b) matches either alternative. Wildcards are not allowed in a class pattern.",
+            "examples": ["${className}Test", "${className}IT", "${className}Tests", "${className}Spec"]
+          },
+          "testMethods": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "description": "Test method name patterns for this scheme, tried in order, first match wins. ${subjectName} stands for the subject method name.",
+            "items": {
+              "type": "string",
+              "description": "For example (test|)${subjectName}* where * matches any suffix, + matches a suffix of at least one character, and (a|b) matches either alternative. Spaces are allowed, which is what Kotlin backtick names need.",
+              "examples": ["(test|)${subjectName}*", "test${subjectName}*", "${subjectName}_+", "${subjectName} *"]
+            }
+          }
+        }
+      }
+    },
     "testClassPatterns": {
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "description": "Test class name patterns, tried in order, first match wins. ${className} stands for the subject class name.",
+      "description": "Test class name patterns, tried in order, first match wins. ${className} stands for the subject class name. Superseded by schemes: declare schemes instead to bind method patterns to a single test class convention. Ignored when schemes is present.",
       "items": {
         "type": "string",
         "description": "For example ${className}Test, ${className}IT or ${className}(Test|Spec). Wildcards are not allowed in a class pattern.",
@@ -24,7 +60,7 @@
       "type": "array",
       "minItems": 1,
       "uniqueItems": true,
-      "description": "Test method name patterns, tried in order, first match wins. ${subjectName} stands for the subject method name.",
+      "description": "Test method name patterns, tried in order, first match wins. ${subjectName} stands for the subject method name. Superseded by schemes, and every pattern listed here applies to every testClassPatterns entry. Ignored when schemes is present.",
       "items": {
         "type": "string",
         "description": "For example (test|)${subjectName}* where * matches any suffix, + matches a suffix of at least one character, and (a|b) matches either alternative. Spaces are allowed, which is what Kotlin backtick names need.",
@@ -40,10 +76,21 @@
     "testAnnotations": {
       "type": "array",
       "uniqueItems": true,
-      "description": "Test frameworks whose annotations mark a method as a test. An empty array accepts any method, which invites false positives.",
+      "description": "Test frameworks whose annotations mark a method as a test. An empty array accepts any method, which invites false positives. An annotation composed of one of these counts as well, so a meta-annotated @IntegrationTest is recognized without being declared anywhere.",
       "items": {
         "type": "string",
         "enum": ["junit4", "junit5", "testng"]
+      }
+    },
+    "additionalTestAnnotations": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "description": "Annotations that mark a method as a test on top of the frameworks selected in testAnnotations, for a house runner or a framework the plugin does not know. An annotation composed of one of these counts as well; a package wildcard is matched on the annotation itself only.",
+      "items": {
+        "type": "string",
+        "description": "A fully qualified annotation name, or a package wildcard ending in .* which matches every annotation in that package and below.",
+        "examples": ["com.acme.testing.AcmeTest", "com.tngtech.archunit.junit.ArchTest", "net.jqwik.api.Property", "com.acme.testing.*"]
       }
     },
     "includeInheritedMethods": {

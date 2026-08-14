@@ -10,7 +10,7 @@ import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher.Capitali
 
 public final class ProjectConfig
 {
-    public static final ProjectConfig ABSENT = new ProjectConfig();
+    private List<TestSchemeSpec> schemes;
 
     private List<String> testClassPatterns;
 
@@ -19,6 +19,8 @@ public final class ProjectConfig
     private CapitalizationScheme capitalizeSubject;
 
     private Set<TestAnnotation> testAnnotations;
+
+    private List<String> additionalTestAnnotations;
 
     private Boolean includeInheritedMethods;
 
@@ -38,12 +40,27 @@ public final class ProjectConfig
 
     private List<String> warnings = emptyList();
 
+    public static ProjectConfig absent()
+    {
+        return new ProjectConfig();
+    }
+
+    public List<TestSchemeSpec> getSchemes()
+    {
+        return schemes;
+    }
+
+    public void setSchemes(List<TestSchemeSpec> schemes)
+    {
+        this.schemes = schemes;
+    }
+
     public List<String> getTestClassPatterns()
     {
         return testClassPatterns;
     }
 
-    void setTestClassPatterns(List<String> testClassPatterns)
+    public void setTestClassPatterns(List<String> testClassPatterns)
     {
         this.testClassPatterns = testClassPatterns;
     }
@@ -53,7 +70,7 @@ public final class ProjectConfig
         return testMethodPatterns;
     }
 
-    void setTestMethodPatterns(List<String> testMethodPatterns)
+    public void setTestMethodPatterns(List<String> testMethodPatterns)
     {
         this.testMethodPatterns = testMethodPatterns;
     }
@@ -63,7 +80,7 @@ public final class ProjectConfig
         return capitalizeSubject;
     }
 
-    void setCapitalizeSubject(CapitalizationScheme capitalizeSubject)
+    public void setCapitalizeSubject(CapitalizationScheme capitalizeSubject)
     {
         this.capitalizeSubject = capitalizeSubject;
     }
@@ -73,9 +90,19 @@ public final class ProjectConfig
         return testAnnotations;
     }
 
-    void setTestAnnotations(Set<TestAnnotation> testAnnotations)
+    public void setTestAnnotations(Set<TestAnnotation> testAnnotations)
     {
         this.testAnnotations = testAnnotations;
+    }
+
+    public List<String> getAdditionalTestAnnotations()
+    {
+        return additionalTestAnnotations;
+    }
+
+    public void setAdditionalTestAnnotations(List<String> additionalTestAnnotations)
+    {
+        this.additionalTestAnnotations = additionalTestAnnotations;
     }
 
     public Boolean getIncludeInheritedMethods()
@@ -83,7 +110,7 @@ public final class ProjectConfig
         return includeInheritedMethods;
     }
 
-    void setIncludeInheritedMethods(Boolean includeInheritedMethods)
+    public void setIncludeInheritedMethods(Boolean includeInheritedMethods)
     {
         this.includeInheritedMethods = includeInheritedMethods;
     }
@@ -93,7 +120,7 @@ public final class ProjectConfig
         return includeInterfacesAndAbstracts;
     }
 
-    void setIncludeInterfacesAndAbstracts(Boolean includeInterfacesAndAbstracts)
+    public void setIncludeInterfacesAndAbstracts(Boolean includeInterfacesAndAbstracts)
     {
         this.includeInterfacesAndAbstracts = includeInterfacesAndAbstracts;
     }
@@ -103,7 +130,7 @@ public final class ProjectConfig
         return includeNestedClasses;
     }
 
-    void setIncludeNestedClasses(Boolean includeNestedClasses)
+    public void setIncludeNestedClasses(Boolean includeNestedClasses)
     {
         this.includeNestedClasses = includeNestedClasses;
     }
@@ -113,7 +140,7 @@ public final class ProjectConfig
         return syncDisplayName;
     }
 
-    void setSyncDisplayName(Boolean syncDisplayName)
+    public void setSyncDisplayName(Boolean syncDisplayName)
     {
         this.syncDisplayName = syncDisplayName;
     }
@@ -123,7 +150,7 @@ public final class ProjectConfig
         return refactoring;
     }
 
-    void setRefactoring(Boolean refactoring)
+    public void setRefactoring(Boolean refactoring)
     {
         this.refactoring = refactoring;
     }
@@ -133,7 +160,7 @@ public final class ProjectConfig
         return navigation;
     }
 
-    void setNavigation(Boolean navigation)
+    public void setNavigation(Boolean navigation)
     {
         this.navigation = navigation;
     }
@@ -143,7 +170,7 @@ public final class ProjectConfig
         return gutterIcons;
     }
 
-    void setGutterIcons(Boolean gutterIcons)
+    public void setGutterIcons(Boolean gutterIcons)
     {
         this.gutterIcons = gutterIcons;
     }
@@ -153,7 +180,7 @@ public final class ProjectConfig
         return preselectRenames;
     }
 
-    void setPreselectRenames(Boolean preselectRenames)
+    public void setPreselectRenames(Boolean preselectRenames)
     {
         this.preselectRenames = preselectRenames;
     }
@@ -163,7 +190,7 @@ public final class ProjectConfig
         return warnings;
     }
 
-    void setWarnings(List<String> warnings)
+    public void setWarnings(List<String> warnings)
     {
         this.warnings = List.copyOf(warnings);
     }

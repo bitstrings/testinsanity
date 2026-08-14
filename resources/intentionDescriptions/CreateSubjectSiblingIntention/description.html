@@ -1,0 +1,20 @@
+<html>
+<body>
+Creates the subject that a test refers to but that does not exist yet: the subject class for a test class, or the
+subject method for a test method.
+<p>
+    The subject name is read back out of the test name through the scheme that matched the test class, so
+    <code>ColorIT</code> under <code>${className}IT</code> yields <code>Color</code>. The class is created under the
+    package of the test class, in the module's first production source root, or in the production module declared
+    for the test module.
+</p>
+<p>
+    A subject method is only offered when the scheme's test method pattern determines the subject name exactly. A
+    pattern with a wildcard suffix, such as <code>(test|)${subjectName}*</code>, cannot say where the subject name
+    ends, so no method is proposed for it rather than guessing one.
+</p>
+<p>
+    Available on a test class or a test method in Java test sources only, and only while the subject is missing.
+</p>
+</body>
+</html>

@@ -44,7 +44,7 @@ class AutomaticTestRenamer
         String requestedName = requestedNames.get(element);
 
         return (requestedName == null)
-            ? getPresentationName(element)
+            ? element.getName()
             : requestedName;
     }
 

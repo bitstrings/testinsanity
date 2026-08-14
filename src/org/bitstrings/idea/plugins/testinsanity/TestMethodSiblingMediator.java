@@ -25,4 +25,6 @@ public interface TestMethodSiblingMediator
     boolean matchesTestName(String testName, String subjectName);
 
     String generateTestName(String subjectName);
+
+    String findSubjectName(String testName);
 }

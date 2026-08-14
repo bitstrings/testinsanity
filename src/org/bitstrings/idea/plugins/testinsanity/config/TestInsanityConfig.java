@@ -1,22 +1,24 @@
 package org.bitstrings.idea.plugins.testinsanity.config;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JComponent;
 
-import org.bitstrings.idea.plugins.testinsanity.PatternBasedTestClassSiblingMediator;
-import org.bitstrings.idea.plugins.testinsanity.PatternBasedTestMethodSiblingMediator;
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.TestInsanityBundle;
 import org.bitstrings.idea.plugins.testinsanity.TestInsanityForm;
+import org.bitstrings.idea.plugins.testinsanity.TestSchemesFactory;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternException;
 
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 
 public class TestInsanityConfig
-    implements SearchableConfigurable
+    implements SearchableConfigurable, Configurable.NoMargin
 {
     private TestInsanityForm form;
     private TestInsanitySettings settings;
@@ -50,7 +52,7 @@ public class TestInsanityConfig
     public JComponent createComponent()
     {
         settings = TestInsanitySettings.getInstance(project);
-        form = new TestInsanityForm(settings, TestInsanityConfiguration.getInstance(project));
+        form = new TestInsanityForm(project, settings, TestInsanityConfiguration.getInstance(project));
 
         return form.getSettingsPanel();
     }
@@ -65,19 +67,17 @@ public class TestInsanityConfig
     public void apply()
         throws ConfigurationException
     {
-        List<String> oldTestClassPatterns = settings.resolveTestClassPatterns();
-        List<String> oldTestMethodNamePatterns = settings.resolveTestMethodNamePatterns();
+        List<TestSchemeSpec> oldSchemes = List.copyOf(settings.getSchemes());
 
         form.apply();
 
         try
         {
-            validatePatterns();
+            validateSchemes();
         }
         catch (ConfigurationException e)
         {
-            settings.updateTestClassPatterns(oldTestClassPatterns);
-            settings.updateTestMethodNamePatterns(oldTestMethodNamePatterns);
+            settings.updateSchemes(oldSchemes);
 
             throw e;
         }
@@ -87,40 +87,38 @@ public class TestInsanityConfig
         }
     }
 
-    private void validatePatterns()
+    private void validateSchemes()
         throws ConfigurationException
     {
-        try
+        Set<String> schemeNames = new HashSet<>();
+
+        for (TestSchemeSpec scheme : settings.getSchemes())
         {
-            for (String testClassPattern : settings.resolveTestClassPatterns())
+            if (!scheme.isComplete())
             {
-                new PatternBasedTestClassSiblingMediator(
-                    testClassPattern, settings.isIncludeInterfacesAbstracts()
-                ).validatePattern();
+                throw schemeError(TestInsanityBundle.message("testinsanity.scheme.error.incomplete", scheme.name));
             }
-        }
-        catch (TestPatternException e)
-        {
-            throw new ConfigurationException(e.getMessage(), e, "Test class pattern error");
+
+            if (!schemeNames.add(scheme.name))
+            {
+                throw schemeError(TestInsanityBundle.message("testinsanity.scheme.error.duplicate", scheme.name));
+            }
         }
 
         try
         {
-            for (String testMethodNamePattern : settings.resolveTestMethodNamePatterns())
-            {
-                new PatternBasedTestMethodSiblingMediator(
-                    testMethodNamePattern,
-                    settings.getTestMethodNameCapitalizationScheme(),
-                    settings.getTestAnnotations(),
-                    settings.isIncludeInheritedMethods(),
-                    settings.isIncludeNestedClasses()
-                ).validatePattern();
-            }
+            new TestSchemesFactory(TestInsanityConfiguration.getInstance(project)).create().validatePatterns();
         }
         catch (TestPatternException e)
         {
-            throw new ConfigurationException(e.getMessage(), e, "Test method pattern error");
+            throw new ConfigurationException(
+                e.getMessage(), e, TestInsanityBundle.message("testinsanity.scheme.error.title"));
         }
+    }
+
+    private static ConfigurationException schemeError(String message)
+    {
+        return new ConfigurationException(message, TestInsanityBundle.message("testinsanity.scheme.error.title"));
     }
 
     @Override

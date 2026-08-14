@@ -1,10 +1,14 @@
 package org.bitstrings.idea.plugins.testinsanity.intentions;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
+import javax.swing.JList;
+
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.TestInsanityBundle;
+import org.bitstrings.idea.plugins.testinsanity.TestScheme;
+import org.bitstrings.idea.plugins.testinsanity.TestSchemes;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings.TestAnnotation;
 import org.bitstrings.idea.plugins.testinsanity.util.TestDisplayNames;
@@ -14,11 +18,9 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -29,16 +31,65 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.SimpleTextAttributes;
 
 public class CreateTestSiblingIntention
     extends PsiElementBaseIntentionAction
 {
+    private static final class CreateTarget
+    {
+        private final TestScheme scheme;
+
+        private final PsiClass testClass;
+
+        private final String testClassName;
+
+        private final String testMethodName;
+
+        CreateTarget(TestScheme scheme, PsiClass testClass, String testClassName, String testMethodName)
+        {
+            this.scheme = scheme;
+            this.testClass = testClass;
+            this.testClassName = testClassName;
+            this.testMethodName = testMethodName;
+        }
+
+        String presentation()
+        {
+            if (testMethodName == null)
+            {
+                return TestInsanityBundle.message("testinsanity.intention.create.class", testClassName);
+            }
+
+            return (testClass == null)
+                ? TestInsanityBundle
+                    .message("testinsanity.intention.create.class.method", testMethodName, testClassName)
+                : TestInsanityBundle
+                    .message("testinsanity.intention.create.method", testMethodName, testClass.getName());
+        }
+    }
+
+    private static final class TargetCellRenderer
+        extends ColoredListCellRenderer<CreateTarget>
+    {
+        private static final long serialVersionUID = 1L;
+
+        @Override
+        protected void customizeCellRenderer(
+            JList<? extends CreateTarget> list, CreateTarget target, int index, boolean selected, boolean hasFocus
+        )
+        {
+            append(target.presentation());
+            append(" " + target.scheme.getName(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+    }
+
     private static final List<TestAnnotation> TEST_ANNOTATION_PREFERENCE =
         List.of(TestAnnotation.JUNIT5, TestAnnotation.JUNIT4, TestAnnotation.TESTNG);
 
@@ -51,69 +102,17 @@ public class CreateTestSiblingIntention
     @Override
     public boolean isAvailable(Project project, Editor editor, PsiElement element)
     {
-        PsiClass subjectClass = findSubjectClass(project, element);
+        List<CreateTarget> targets = findTargets(project, element);
 
-        if (subjectClass == null)
-        {
-            return false;
-        }
-
-        RenameTestService renameTestService = RenameTestService.getInstance(project);
-
-        List<PsiClass> testClasses = renameTestService.findTestClasses(subjectClass);
-
-        PsiMethod subjectMethod = findSubjectMethod(element);
-
-        String testClassName =
-            renameTestService.getTestClassSiblingMediator().generateTestName(subjectClass.getName());
-
-        if (subjectMethod == null)
-        {
-            if (!testClasses.isEmpty() || !canCreateTestClass(project, subjectClass, testClassName))
-            {
-                return false;
-            }
-
-            setText(TestInsanityBundle.message("testinsanity.intention.create.class", testClassName));
-
-            return true;
-        }
-
-        String testMethodName =
-            renameTestService.getTestMethodSiblingMediator().generateTestName(subjectMethod.getName());
-
-        if (!isIdentifier(project, testMethodName))
-        {
-            return false;
-        }
-
-        if (testClasses.isEmpty())
-        {
-            if (!canCreateTestClass(project, subjectClass, testClassName))
-            {
-                return false;
-            }
-
-            setText(
-                TestInsanityBundle
-                    .message("testinsanity.intention.create.class.method", testMethodName, testClassName));
-
-            return true;
-        }
-
-        PsiClass testClass = testClasses.get(0);
-
-        if (
-            !renameTestService.getTestMethodSiblingMediator().getTestMethods(subjectMethod, testClasses).isEmpty()
-                || !isModifiableJavaClass(testClass)
-        )
+        if (targets.isEmpty())
         {
             return false;
         }
 
         setText(
-            TestInsanityBundle
-                .message("testinsanity.intention.create.method", testMethodName, testClass.getName()));
+            (targets.size() == 1)
+                ? targets.get(0).presentation()
+                : TestInsanityBundle.message("testinsanity.intention.create.choose"));
 
         return true;
     }
@@ -140,13 +139,116 @@ public class CreateTestSiblingIntention
             return;
         }
 
+        List<CreateTarget> targets = findTargets(project, element);
+
+        if (targets.size() == 1)
+        {
+            createAndNavigate(project, subjectClass, targets.get(0));
+
+            return;
+        }
+
+        if (editor == null)
+        {
+            for (CreateTarget target : targets)
+            {
+                createAndNavigate(project, subjectClass, target);
+            }
+
+            return;
+        }
+
+        JBPopupFactory
+            .getInstance()
+            .createPopupChooserBuilder(targets)
+            .setTitle(TestInsanityBundle.message("testinsanity.intention.create.choose.title"))
+            .setRenderer(new TargetCellRenderer())
+            .setItemChosenCallback(target -> createAndNavigate(project, subjectClass, target))
+            .createPopup()
+            .showInBestPositionFor(editor);
+    }
+
+    private List<CreateTarget> findTargets(Project project, PsiElement element)
+    {
+        PsiClass subjectClass = findSubjectClass(project, element);
+
+        if (subjectClass == null)
+        {
+            return List.of();
+        }
+
+        RenameTestService renameTestService = RenameTestService.getInstance(project);
+
+        TestSchemes schemes = renameTestService.getTestSchemes();
+
+        List<PsiClass> testClasses = renameTestService.findTestClasses(subjectClass);
+
         PsiMethod subjectMethod = findSubjectMethod(element);
 
+        boolean canCreateClass = (SiblingSourceRoots.findTestSourceRoot(subjectClass) != null);
+
+        List<CreateTarget> targets = new ArrayList<>();
+
+        for (TestScheme scheme : schemes.getSchemes())
+        {
+            CreateTarget target =
+                findTarget(project, schemes, scheme, subjectClass, subjectMethod, testClasses, canCreateClass);
+
+            if (target != null)
+            {
+                targets.add(target);
+            }
+        }
+
+        return targets;
+    }
+
+    private static CreateTarget findTarget(
+        Project project, TestSchemes schemes, TestScheme scheme, PsiClass subjectClass, PsiMethod subjectMethod,
+        List<PsiClass> testClasses, boolean canCreateClass
+    )
+    {
+        PsiClass testClass = schemes.testClassOf(scheme, testClasses);
+
+        String testClassName = schemes.generateTestClassName(scheme, subjectClass.getName());
+
+        if ((testClass == null) && (!canCreateClass || !isIdentifier(project, testClassName)))
+        {
+            return null;
+        }
+
+        if (subjectMethod == null)
+        {
+            return (testClass == null)
+                ? new CreateTarget(scheme, null, testClassName, null)
+                : null;
+        }
+
+        String testMethodName = schemes.generateTestMethodName(scheme, subjectMethod.getName());
+
+        if (!isIdentifier(project, testMethodName))
+        {
+            return null;
+        }
+
+        if (testClass == null)
+        {
+            return new CreateTarget(scheme, null, testClassName, testMethodName);
+        }
+
+        return (scheme.getMethodMediator().getTestMethods(subjectMethod, List.of(testClass)).isEmpty()
+            && isModifiableJavaClass(testClass))
+                ? new CreateTarget(scheme, testClass, testClassName, testMethodName)
+                : null;
+    }
+
+    private void createAndNavigate(Project project, PsiClass subjectClass, CreateTarget target)
+    {
         PsiElement created =
             WriteCommandAction
                 .writeCommandAction(project)
-                .withName(getText())
-                .compute(() -> createSibling(project, subjectClass, subjectMethod));
+                .withName(target.presentation())
+                .compute(() -> createSibling(project, subjectClass, target));
 
         if (created instanceof Navigatable)
         {
@@ -154,23 +256,21 @@ public class CreateTestSiblingIntention
         }
     }
 
-    private static PsiElement createSibling(Project project, PsiClass subjectClass, PsiMethod subjectMethod)
+    private static PsiElement createSibling(Project project, PsiClass subjectClass, CreateTarget target)
     {
-        List<PsiClass> testClasses = RenameTestService.getInstance(project).findTestClasses(subjectClass);
-
         PsiClass testClass =
-            testClasses.isEmpty()
-                ? createTestClass(project, subjectClass)
-                : testClasses.get(0);
+            (target.testClass == null)
+                ? createTestClass(project, subjectClass, target.testClassName)
+                : target.testClass;
 
         if (testClass == null)
         {
             return null;
         }
 
-        return (subjectMethod == null)
+        return (target.testMethodName == null)
             ? testClass
-            : createTestMethod(project, testClass, subjectMethod);
+            : createTestMethod(project, testClass, target.testMethodName);
     }
 
     private static PsiClass findSubjectClass(Project project, PsiElement element)
@@ -187,12 +287,9 @@ public class CreateTestSiblingIntention
             return null;
         }
 
-        return (RenameTestService
-            .getInstance(project)
-            .getTestClassSiblingMediator()
-            .resolveTestClass(elementClass) == null)
-                ? elementClass
-                : null;
+        return (RenameTestService.getInstance(project).getTestSchemes().resolveTestClass(elementClass) == null)
+            ? elementClass
+            : null;
     }
 
     private static PsiMethod findSubjectMethod(PsiElement element)
@@ -204,14 +301,9 @@ public class CreateTestSiblingIntention
             : elementMethod;
     }
 
-    private static boolean canCreateTestClass(Project project, PsiClass subjectClass, String testClassName)
+    private static PsiClass createTestClass(Project project, PsiClass subjectClass, String testClassName)
     {
-        return isIdentifier(project, testClassName) && (findTestSourceRoot(subjectClass) != null);
-    }
-
-    private static PsiClass createTestClass(Project project, PsiClass subjectClass)
-    {
-        VirtualFile testSourceRoot = findTestSourceRoot(subjectClass);
+        VirtualFile testSourceRoot = SiblingSourceRoots.findTestSourceRoot(subjectClass);
 
         if (testSourceRoot == null)
         {
@@ -219,32 +311,17 @@ public class CreateTestSiblingIntention
         }
 
         PsiDirectory testDirectory =
-            findOrCreateDirectory(project, testSourceRoot, PsiUtil.getPackageName(subjectClass));
+            SiblingSourceRoots
+                .findOrCreateDirectory(project, testSourceRoot, PsiUtil.getPackageName(subjectClass));
 
-        if (testDirectory == null)
-        {
-            return null;
-        }
-
-        return JavaDirectoryService
-            .getInstance()
-            .createClass(
-                testDirectory,
-                RenameTestService
-                    .getInstance(project)
-                    .getTestClassSiblingMediator()
-                    .generateTestName(subjectClass.getName()));
+        return (testDirectory == null)
+            ? null
+            : JavaDirectoryService.getInstance().createClass(testDirectory, testClassName);
     }
 
-    private static PsiMethod createTestMethod(Project project, PsiClass testClass, PsiMethod subjectMethod)
+    private static PsiMethod createTestMethod(Project project, PsiClass testClass, String testMethodName)
     {
         TestInsanityConfiguration configuration = TestInsanityConfiguration.getInstance(project);
-
-        String testMethodName =
-            RenameTestService
-                .getInstance(project)
-                .getTestMethodSiblingMediator()
-                .generateTestName(subjectMethod.getName());
 
         StringBuilder methodText = new StringBuilder();
 
@@ -288,47 +365,6 @@ public class CreateTestSiblingIntention
             )
             {
                 return testAnnotation.getPrimaryAnnotationFqn();
-            }
-        }
-
-        return null;
-    }
-
-    private static PsiDirectory findOrCreateDirectory(Project project, VirtualFile sourceRoot, String packageName)
-    {
-        PsiDirectory directory = PsiManager.getInstance(project).findDirectory(sourceRoot);
-
-        if ((directory == null) || StringUtils.isEmpty(packageName))
-        {
-            return directory;
-        }
-
-        for (String packageSegment : StringUtils.split(packageName, '.'))
-        {
-            PsiDirectory subdirectory = directory.findSubdirectory(packageSegment);
-
-            directory = (subdirectory == null) ? directory.createSubdirectory(packageSegment) : subdirectory;
-        }
-
-        return directory;
-    }
-
-    private static VirtualFile findTestSourceRoot(PsiClass subjectClass)
-    {
-        Module module = ModuleUtilCore.findModuleForPsiElement(subjectClass);
-
-        if (module == null)
-        {
-            return null;
-        }
-
-        ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(subjectClass.getProject());
-
-        for (VirtualFile sourceRoot : ModuleRootManager.getInstance(module).getSourceRoots(true))
-        {
-            if (fileIndex.isInTestSourceContent(sourceRoot))
-            {
-                return sourceRoot;
             }
         }
 

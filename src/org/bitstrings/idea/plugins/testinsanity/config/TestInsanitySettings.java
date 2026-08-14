@@ -26,12 +26,14 @@ public final class TestInsanitySettings
 {
     public enum TestAnnotation
     {
-        JUNIT4("org.junit.Test"),
+        JUNIT4("org.junit.Test", "org.junit.experimental.theories.Theory"),
         JUNIT5(
             "org.junit.jupiter.api.Test",
             "org.junit.jupiter.api.TestFactory",
             "org.junit.jupiter.params.ParameterizedTest",
-            "org.junit.jupiter.api.RepeatedTest"
+            "org.junit.jupiter.api.RepeatedTest",
+            "org.junit.jupiter.api.TestTemplate",
+            "org.junit.platform.commons.annotation.Testable"
         ),
         TESTNG("org.testng.annotations.Test");
 
@@ -55,6 +57,10 @@ public final class TestInsanitySettings
 
     public final Set<String> testAnnotations = new HashSet<>();
 
+    public final List<String> additionalTestAnnotations = new ArrayList<>();
+
+    public final List<TestSchemeSpec> schemes = new ArrayList<>();
+
     public final List<String> testClassPatterns = new ArrayList<>();
 
     public final List<String> testMethodNamePatterns = new ArrayList<>();
@@ -69,7 +75,7 @@ public final class TestInsanitySettings
 
     public boolean navigationEnabled;
 
-    public boolean renamingDialogEnabled;
+    public boolean preselectRenames;
 
     public boolean gutterAnnotationEnabled;
 
@@ -81,6 +87,11 @@ public final class TestInsanitySettings
 
     public boolean syncDisplayName;
 
+    public boolean useProjectConfig;
+
+    @Deprecated
+    public Boolean renamingDialogEnabled;
+
     public TestInsanitySettings()
     {
         setTestAnnotation(TestAnnotation.JUNIT4, true);
@@ -89,12 +100,13 @@ public final class TestInsanitySettings
         setTestMethodNameCapitalizationScheme(CapitalizationScheme.IF_PREFIXED);
         setRefactoringEnabled(true);
         setNavigationEnabled(true);
-        setRenamingDialogEnabled(true);
+        setPreselectRenames(true);
         setGutterAnnotationEnabled(true);
         setIncludeInheritedMethods(true);
         setIncludeInterfacesAbstracts(false);
         setIncludeNestedClasses(true);
         setSyncDisplayName(false);
+        setUseProjectConfig(true);
     }
 
     public static TestInsanitySettings getInstance(Project project)
@@ -102,11 +114,6 @@ public final class TestInsanitySettings
         return project == null
             ? ApplicationManager.getApplication().getService(TestInsanitySettings.class)
             : project.getService(TestInsanitySettings.class);
-    }
-
-    @Override
-    public void initializeComponent()
-    {
     }
 
     @Override
@@ -119,6 +126,20 @@ public final class TestInsanitySettings
     public void loadState(TestInsanitySettings settings)
     {
         XmlSerializerUtil.copyBean(settings, this);
+
+        for (TestAnnotation testAnnotation : TestAnnotation.values())
+        {
+            if (hasTestAnnotation(testAnnotation))
+            {
+                setTestAnnotation(testAnnotation, true);
+            }
+        }
+
+        if (renamingDialogEnabled != null)
+        {
+            preselectRenames = true;
+            renamingDialogEnabled = null;
+        }
     }
 
     public void setTestAnnotation(TestAnnotation annotation, boolean enabled)
@@ -141,6 +162,65 @@ public final class TestInsanitySettings
     public Set<String> getTestAnnotations()
     {
         return testAnnotations;
+    }
+
+    public List<String> resolveAdditionalTestAnnotations()
+    {
+        return withoutBlanks(additionalTestAnnotations);
+    }
+
+    public void updateAdditionalTestAnnotations(List<String> annotationPatterns)
+    {
+        additionalTestAnnotations.clear();
+        additionalTestAnnotations.addAll(annotationPatterns);
+    }
+
+    public List<TestSchemeSpec> getSchemes()
+    {
+        return schemes;
+    }
+
+    public List<TestSchemeSpec> resolveSchemes()
+    {
+        List<TestSchemeSpec> declaredSchemes = new ArrayList<>();
+
+        for (TestSchemeSpec scheme : schemes)
+        {
+            if (scheme.isComplete())
+            {
+                declaredSchemes.add(scheme.copy());
+            }
+        }
+
+        return declaredSchemes.isEmpty()
+            ? TestSchemeSpec.migrate(resolveTestClassPatterns(), resolveTestMethodNamePatterns())
+            : declaredSchemes;
+    }
+
+    public void updateSchemes(List<TestSchemeSpec> updatedSchemes)
+    {
+        schemes.clear();
+
+        List<String> classPatterns = new ArrayList<>();
+        List<String> methodPatterns = new ArrayList<>();
+
+        for (TestSchemeSpec scheme : updatedSchemes)
+        {
+            schemes.add(scheme.copy());
+
+            classPatterns.add(scheme.testClass);
+
+            for (String testMethod : scheme.testMethods)
+            {
+                if (!methodPatterns.contains(testMethod))
+                {
+                    methodPatterns.add(testMethod);
+                }
+            }
+        }
+
+        updateTestClassPatterns(classPatterns);
+        updateTestMethodNamePatterns(methodPatterns);
     }
 
     public List<String> resolveTestClassPatterns()
@@ -225,14 +305,14 @@ public final class TestInsanitySettings
         return navigationEnabled;
     }
 
-    public void setRenamingDialogEnabled(boolean renamingDialogEnabled)
+    public void setPreselectRenames(boolean preselectRenames)
     {
-        this.renamingDialogEnabled = renamingDialogEnabled;
+        this.preselectRenames = preselectRenames;
     }
 
-    public boolean isRenamingDialogEnabled()
+    public boolean isPreselectRenames()
     {
-        return renamingDialogEnabled;
+        return preselectRenames;
     }
 
     public void setGutterAnnotationEnabled(boolean gutterAnnotationEnabled)
@@ -283,5 +363,15 @@ public final class TestInsanitySettings
     public boolean isSyncDisplayName()
     {
         return syncDisplayName;
+    }
+
+    public void setUseProjectConfig(boolean useProjectConfig)
+    {
+        this.useProjectConfig = useProjectConfig;
+    }
+
+    public boolean isUseProjectConfig()
+    {
+        return useProjectConfig;
     }
 }

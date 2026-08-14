@@ -6,6 +6,8 @@ import static java.util.Collections.singletonList;
 import java.util.List;
 
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
+import org.bitstrings.idea.plugins.testinsanity.TestInsanityBundle;
+import org.bitstrings.idea.plugins.testinsanity.TestSchemes;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
 import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
@@ -37,7 +39,7 @@ public class JumpToSiblingAction
         @Override
         protected String getNotFoundMessage(Project project, Editor editor, PsiFile file)
         {
-            return "File " + file.getName() + "not found.";
+            return TestInsanityBundle.message("testinsanity.action.jump.notfound", file.getName());
         }
 
         @Override
@@ -68,7 +70,9 @@ public class JumpToSiblingAction
                 return null;
             }
 
-            PsiClass testClass = renameTestService.getTestClassSiblingMediator().resolveTestClass(elementClass);
+            TestSchemes schemes = renameTestService.getTestSchemes();
+
+            PsiClass testClass = schemes.resolveTestClass(elementClass);
 
             List<PsiMethod> gotoMethods = null;
             List<PsiClass> gotoClasses;
@@ -84,11 +88,7 @@ public class JumpToSiblingAction
 
                 if (elementMethod != null)
                 {
-                    gotoMethods =
-                        nullIfEmpty(
-                            renameTestService
-                                .getTestMethodSiblingMediator()
-                                .getTestMethods(elementMethod, gotoClasses));
+                    gotoMethods = nullIfEmpty(schemes.getTestMethods(elementMethod, gotoClasses));
                 }
             }
             else
@@ -105,10 +105,7 @@ public class JumpToSiblingAction
                 if (elementMethod != null)
                 {
                     gotoMethods =
-                        nullIfEmpty(
-                            renameTestService
-                                .getTestMethodSiblingMediator()
-                                .getSubjectMethods(elementMethod, gotoClass));
+                        nullIfEmpty(schemes.getSubjectMethods(testClass, elementMethod, gotoClass));
                 }
             }
 
@@ -157,12 +154,14 @@ public class JumpToSiblingAction
 
         presentation
             .setText(
-                (RenameTestService
-                    .getInstance(project)
-                    .getTestClassSiblingMediator()
-                    .resolveTestClass(elementClass) == null)
-                        ? "_Jump to Test"
-                        : "_Jump to Subject",
+                TestInsanityBundle
+                    .message(
+                        (RenameTestService
+                            .getInstance(project)
+                            .getTestSchemes()
+                            .resolveTestClass(elementClass) == null)
+                                ? "testinsanity.action.jump.test"
+                                : "testinsanity.action.jump.subject"),
                 true);
 
         presentation.setEnabled(true);

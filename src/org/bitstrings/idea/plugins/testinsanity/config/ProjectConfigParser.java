@@ -11,6 +11,7 @@ import java.util.TreeSet;
 import org.bitstrings.idea.plugins.testinsanity.PatternBasedTestClassSiblingMediator;
 import org.bitstrings.idea.plugins.testinsanity.PatternBasedTestMethodSiblingMediator;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanitySettings.TestAnnotation;
+import org.bitstrings.idea.plugins.testinsanity.util.TestAnnotationPattern;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternException;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher.CapitalizationScheme;
 
@@ -39,14 +40,40 @@ public final class ProjectConfigParser
             "junit5", TestAnnotation.JUNIT5,
             "testng", TestAnnotation.TESTNG);
 
+    private static final Set<String> SCHEME_KEYS = Set.of("name", "testClass", "testMethods");
+
     private static final Set<String> KNOWN_KEYS =
         Set.of(
-            SCHEMA_KEY, "testClassPatterns", "testMethodPatterns", "capitalizeSubject", "testAnnotations",
-            "includeInheritedMethods", "includeInterfacesAndAbstracts", "includeNestedClasses", "syncDisplayName",
-            "refactoring", "navigation", "gutterIcons", "preselectRenames");
+            SCHEMA_KEY, "schemes", "testClassPatterns", "testMethodPatterns", "capitalizeSubject", "testAnnotations",
+            "additionalTestAnnotations", "includeInheritedMethods", "includeInterfacesAndAbstracts",
+            "includeNestedClasses", "syncDisplayName", "refactoring", "navigation", "gutterIcons",
+            "preselectRenames");
 
     private ProjectConfigParser()
     {
+    }
+
+    public static String tokenFor(CapitalizationScheme scheme)
+    {
+        return keyFor(CAPITALIZATION_SCHEMES, scheme);
+    }
+
+    public static String tokenFor(TestAnnotation testAnnotation)
+    {
+        return keyFor(TEST_ANNOTATIONS, testAnnotation);
+    }
+
+    private static <T> String keyFor(Map<String, T> tokens, T value)
+    {
+        for (Map.Entry<String, T> token : tokens.entrySet())
+        {
+            if (token.getValue() == value)
+            {
+                return token.getKey();
+            }
+        }
+
+        throw new IllegalArgumentException("No configuration token for " + value);
     }
 
     public static ProjectConfig parse(String json)
@@ -66,10 +93,13 @@ public final class ProjectConfigParser
 
         ProjectConfig config = new ProjectConfig();
 
+        config.setSchemes(readSchemes(root));
         config.setTestClassPatterns(validateClassPatterns(readPatterns(root, "testClassPatterns")));
         config.setTestMethodPatterns(validateMethodPatterns(readPatterns(root, "testMethodPatterns")));
         config.setCapitalizeSubject(readEnum(root, "capitalizeSubject", CAPITALIZATION_SCHEMES));
         config.setTestAnnotations(readTestAnnotations(root));
+        config.setAdditionalTestAnnotations(
+            validateAnnotationPatterns(readPatterns(root, "additionalTestAnnotations")));
         config.setIncludeInheritedMethods(readBoolean(root, "includeInheritedMethods"));
         config.setIncludeInterfacesAndAbstracts(readBoolean(root, "includeInterfacesAndAbstracts"));
         config.setIncludeNestedClasses(readBoolean(root, "includeNestedClasses"));
@@ -81,6 +111,107 @@ public final class ProjectConfigParser
         config.setWarnings(warnings);
 
         return config;
+    }
+
+    private static List<TestSchemeSpec> readSchemes(JsonObject root)
+    {
+        JsonElement value = root.get("schemes");
+
+        if ((value == null) || value.isJsonNull())
+        {
+            return null;
+        }
+
+        if (!value.isJsonArray())
+        {
+            throw new ProjectConfigException("schemes must be an array of scheme objects");
+        }
+
+        List<TestSchemeSpec> schemes = new ArrayList<>();
+
+        for (JsonElement element : value.getAsJsonArray())
+        {
+            if (!element.isJsonObject())
+            {
+                throw new ProjectConfigException(
+                    "schemes must contain only objects declaring name, testClass and testMethods");
+            }
+
+            schemes.add(readScheme(element.getAsJsonObject(), schemes));
+        }
+
+        if (schemes.isEmpty())
+        {
+            throw new ProjectConfigException("schemes must declare at least one scheme");
+        }
+
+        return schemes;
+    }
+
+    private static TestSchemeSpec readScheme(JsonObject scheme, List<TestSchemeSpec> declaredSchemes)
+    {
+        for (String key : scheme.keySet())
+        {
+            if (!SCHEME_KEYS.contains(key))
+            {
+                throw new ProjectConfigException(
+                    "Unknown scheme setting " + key + ", expected one of "
+                        + String.join(", ", new TreeSet<>(SCHEME_KEYS)));
+            }
+        }
+
+        String name = readString(scheme, "name");
+
+        if (name == null)
+        {
+            throw new ProjectConfigException("Every scheme needs a name");
+        }
+
+        for (TestSchemeSpec declaredScheme : declaredSchemes)
+        {
+            if (name.equals(declaredScheme.name))
+            {
+                throw new ProjectConfigException("Duplicate scheme name " + name);
+            }
+        }
+
+        String testClass = readString(scheme, "testClass");
+
+        if (testClass == null)
+        {
+            throw new ProjectConfigException("Scheme " + name + " needs a testClass pattern");
+        }
+
+        List<String> testMethods = readPatterns(scheme, "testMethods");
+
+        if (testMethods == null)
+        {
+            throw new ProjectConfigException("Scheme " + name + " needs at least one testMethods pattern");
+        }
+
+        validateClassPatterns(List.of(testClass));
+        validateMethodPatterns(testMethods);
+
+        return new TestSchemeSpec(name, testClass, testMethods);
+    }
+
+    private static String readString(JsonObject root, String key)
+    {
+        JsonElement value = root.get(key);
+
+        if ((value == null) || value.isJsonNull())
+        {
+            return null;
+        }
+
+        if (!isString(value))
+        {
+            throw new ProjectConfigException(key + " must be a string");
+        }
+
+        String text = value.getAsString().trim();
+
+        return text.isEmpty() ? null : text;
     }
 
     private static List<String> validateClassPatterns(List<String> patterns)
@@ -101,6 +232,25 @@ public final class ProjectConfigParser
         }
 
         return patterns;
+    }
+
+    private static List<String> validateAnnotationPatterns(List<String> annotationPatterns)
+    {
+        if (annotationPatterns != null)
+        {
+            for (String annotationPattern : annotationPatterns)
+            {
+                if (!TestAnnotationPattern.isValid(annotationPattern))
+                {
+                    throw new ProjectConfigException(
+                        "additionalTestAnnotations " + annotationPattern
+                            + " is not a fully qualified annotation name or a "
+                            + TestAnnotationPattern.PACKAGE_WILDCARD_SUFFIX + " package wildcard");
+                }
+            }
+        }
+
+        return annotationPatterns;
     }
 
     private static List<String> validateMethodPatterns(List<String> patterns)

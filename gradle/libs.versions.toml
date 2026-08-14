@@ -1,0 +1,19 @@
+[versions]
+# The platform the plugin compiles and tests against. It is the oldest supported IDE, so the compiler
+# rejects any API the declared since-build does not have.
+intellijPlatform = "2024.3"
+pluginSinceBuild = "243"
+
+# The newest IDE the plugin is verified against. Both ends of the supported range are pinned so a
+# verification run is reproducible; bump this when a new IDE is released. It is the unified IntelliJ IDEA
+# product, since Community stopped being published separately after 2025.3.
+intellijPlatformNewest = "2026.2"
+
+javaToolchain = "21"
+
+junit = "4.13.2"
+errorProneAnnotations = "2.28.0"
+
+[libraries]
+junit = { module = "junit:junit", version.ref = "junit" }
+errorProneAnnotations = { module = "com.google.errorprone:error_prone_annotations", version.ref = "errorProneAnnotations" }

@@ -11,6 +11,7 @@ import javax.swing.Icon;
 import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.RenameTestService;
 import org.bitstrings.idea.plugins.testinsanity.TestInsanityBundle;
+import org.bitstrings.idea.plugins.testinsanity.TestSchemes;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
 import org.bitstrings.idea.plugins.testinsanity.lang.TestElementAdapters;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
@@ -46,8 +47,8 @@ public class TestSiblingLineMarkerProvider
     private static final Icon GUTTER_METHOD_ORPHAN_ICON =
         IconLoader.getIcon("/icons/gutter_orphan_icon.svg", TestSiblingLineMarkerProvider.class);
 
-    private static final String NOT_LINKED_TO_SUBJECT_MESSAGE = "Missing Test Subject Method";
-    private static final String NO_SUBJECT_CLASS_MESSAGE = "Missing Test Subject Class";
+    private static final String TEST_METHOD_KEY = "testinsanity.marker.method.test";
+    private static final String SUBJECT_METHOD_KEY = "testinsanity.marker.method.subject";
 
     @Override
     public String getName()
@@ -112,7 +113,7 @@ public class TestSiblingLineMarkerProvider
 
         RenameTestService renameTestService = RenameTestService.getInstance(anchor.getProject());
 
-        if (!renameTestService.getTestClassSiblingMediator().isTestClass(ownerClass))
+        if (!renameTestService.getTestSchemes().isTestClass(ownerClass))
         {
             List<PsiClass> testClasses = renameTestService.findTestClasses(ownerClass);
 
@@ -121,7 +122,8 @@ public class TestSiblingLineMarkerProvider
                 return;
             }
 
-            String message = "Class Tested (Found " + testClasses.size() + ")";
+            String message =
+                TestInsanityBundle.message("testinsanity.marker.class.tested", testClasses.size());
 
             result.add(createMarker(anchor, GUTTER_CLASS_ICON, testClasses, message, message));
 
@@ -132,10 +134,9 @@ public class TestSiblingLineMarkerProvider
 
         if (subjectClass == null)
         {
-            result.add(
-                createMarker(
-                    anchor, GUTTER_CLASS_ORPHAN_ICON, emptyList(),
-                    NO_SUBJECT_CLASS_MESSAGE, NO_SUBJECT_CLASS_MESSAGE));
+            String message = TestInsanityBundle.message("testinsanity.marker.class.missing");
+
+            result.add(createMarker(anchor, GUTTER_CLASS_ORPHAN_ICON, emptyList(), message, message));
 
             return;
         }
@@ -145,9 +146,10 @@ public class TestSiblingLineMarkerProvider
         result.add(
             createMarker(
                 anchor, GUTTER_CLASS_ICON, singletonList(subjectClass),
-                "Subject Class " + subjectClassPresentation,
-                "Subject Class <a href=\"#javaClass/" + subjectClassPresentation + "\">"
-                    + getAbbreviatedText(subjectClassPresentation, MAX_FQN_LENGTH) + "</a>"));
+                TestInsanityBundle.message("testinsanity.marker.class.subject", subjectClassPresentation),
+                TestInsanityBundle.message(
+                    "testinsanity.marker.class.subject.link",
+                    subjectClassPresentation, getAbbreviatedText(subjectClassPresentation, MAX_FQN_LENGTH))));
     }
 
     protected void collectMethodMarker(
@@ -172,6 +174,8 @@ public class TestSiblingLineMarkerProvider
 
         RenameTestService renameTestService = RenameTestService.getInstance(project);
 
+        TestSchemes schemes = renameTestService.getTestSchemes();
+
         boolean annotationCheckEnabled =
             !TestInsanityConfiguration.getInstance(project).getTestAnnotationFqns().isEmpty();
 
@@ -182,17 +186,13 @@ public class TestSiblingLineMarkerProvider
             List<PsiClass> testClasses = renameTestService.findTestClasses(containingClass);
 
             addMethodMarker(
-                anchor, testClasses,
-                renameTestService.getTestMethodSiblingMediator().getTestMethods(ownerMethod, testClasses),
-                "Test", true, result);
+                anchor, testClasses, schemes.getTestMethods(ownerMethod, testClasses), TEST_METHOD_KEY, true,
+                result);
 
             return;
         }
 
-        if (
-            annotationCheckEnabled
-                && !renameTestService.getTestMethodSiblingMediator().checkMethodAnnotation(ownerMethod, true)
-        )
+        if (annotationCheckEnabled && !schemes.checkMethodAnnotation(testClass, ownerMethod, true))
         {
             return;
         }
@@ -204,13 +204,13 @@ public class TestSiblingLineMarkerProvider
             (subjectClass == null) ? emptyList() : singletonList(subjectClass),
             (subjectClass == null)
                 ? emptyList()
-                : renameTestService.getTestMethodSiblingMediator().getSubjectMethods(ownerMethod, subjectClass),
-            "Subject", !annotationCheckEnabled, result);
+                : schemes.getSubjectMethods(testClass, ownerMethod, subjectClass),
+            SUBJECT_METHOD_KEY, !annotationCheckEnabled, result);
     }
 
     protected void addMethodMarker(
         PsiElement anchor, List<PsiClass> siblingClasses, List<PsiMethod> siblingMethods,
-        String siblingIdentifier, boolean ignoreMissing,
+        String siblingMethodKey, boolean ignoreMissing,
         Collection<? super RelatedItemLineMarkerInfo<?>> result
     )
     {
@@ -221,7 +221,11 @@ public class TestSiblingLineMarkerProvider
                 return;
             }
 
-            String message = siblingClasses.isEmpty() ? NO_SUBJECT_CLASS_MESSAGE : NOT_LINKED_TO_SUBJECT_MESSAGE;
+            String message =
+                TestInsanityBundle.message(
+                    siblingClasses.isEmpty()
+                        ? "testinsanity.marker.class.missing"
+                        : "testinsanity.marker.method.missing");
 
             result.add(createMarker(anchor, GUTTER_METHOD_ORPHAN_ICON, emptyList(), message, message));
 
@@ -237,22 +241,21 @@ public class TestSiblingLineMarkerProvider
                 siblingMethodClassPresentation + "." + siblingMethod.getName(), MAX_FQN_LENGTH);
 
         String message =
-            siblingIdentifier + "Method " + siblingMethodPresentation + " (" + siblingMethods.size() + " Found)";
+            TestInsanityBundle.message(siblingMethodKey, siblingMethodPresentation, siblingMethods.size());
 
         String tooltip =
-            siblingIdentifier
-                + "Method <a href=\"#javaClass/" + siblingMethodClassPresentation + "\">"
-                + siblingMethodPresentation + "</a>"
-                + " (" + siblingMethods.size() + " Found)";
+            TestInsanityBundle.message(
+                siblingMethodKey + ".link",
+                siblingMethodClassPresentation, siblingMethodPresentation, siblingMethods.size());
 
         String displayName = getDisplayName(siblingMethod);
 
         if (displayName != null)
         {
-            message += "<br/>Display Name " + displayName;
+            message += TestInsanityBundle.message("testinsanity.marker.displayname", displayName);
             tooltip +=
-                "<br/>Display Name <a href=\"#javaClass/" + siblingMethodClassPresentation + "\">"
-                    + displayName + "</a>";
+                TestInsanityBundle.message(
+                    "testinsanity.marker.displayname.link", siblingMethodClassPresentation, displayName);
         }
 
         result.add(createMarker(anchor, GUTTER_METHOD_ICON, siblingMethods, message, tooltip));

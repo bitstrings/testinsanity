@@ -63,7 +63,7 @@ public class TestClassAutomaticRenamerFactory
         RenameTestService renameTestService = RenameTestService.getInstance(project);
 
         Map<PsiClass, String> renames =
-            (renameTestService.getTestClassSiblingMediator().resolveTestClass(elementClass) == null)
+            (renameTestService.getTestSchemes().resolveTestClass(elementClass) == null)
                 ? renameTestService.renameSubjectClassMapping(elementClass, newName)
                 : renameTestService.renameTestClassMapping(elementClass, newName);
 

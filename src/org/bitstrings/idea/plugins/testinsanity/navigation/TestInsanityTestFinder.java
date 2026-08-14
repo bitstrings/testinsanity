@@ -36,7 +36,7 @@ public class TestInsanityTestFinder
 
         RenameTestService renameTestService = RenameTestService.getInstance(element.getProject());
 
-        if (renameTestService.getTestClassSiblingMediator().resolveTestClass(elementClass) != null)
+        if (renameTestService.getTestSchemes().resolveTestClass(elementClass) != null)
         {
             return emptyList();
         }
@@ -62,7 +62,7 @@ public class TestInsanityTestFinder
         return (elementClass != null)
             && (RenameTestService
                 .getInstance(element.getProject())
-                .getTestClassSiblingMediator()
+                .getTestSchemes()
                 .resolveTestClass(elementClass) != null);
     }
 
@@ -77,7 +77,7 @@ public class TestInsanityTestFinder
 
         RenameTestService renameTestService = RenameTestService.getInstance(element.getProject());
 
-        PsiClass testClass = renameTestService.getTestClassSiblingMediator().resolveTestClass(elementClass);
+        PsiClass testClass = renameTestService.getTestSchemes().resolveTestClass(elementClass);
 
         return (testClass == null)
             ? null

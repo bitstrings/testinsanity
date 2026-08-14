@@ -109,6 +109,22 @@ public class CompositeTestMethodSiblingMediator
             : mediators.get(0).generateTestName(subjectName);
     }
 
+    @Override
+    public String findSubjectName(String testName)
+    {
+        for (TestMethodSiblingMediator mediator : mediators)
+        {
+            String subjectName = mediator.findSubjectName(testName);
+
+            if (subjectName != null)
+            {
+                return subjectName;
+            }
+        }
+
+        return null;
+    }
+
     private TestMethodSiblingMediator findMatching(String testName, String subjectName)
     {
         for (TestMethodSiblingMediator mediator : mediators)

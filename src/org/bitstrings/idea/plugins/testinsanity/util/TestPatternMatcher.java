@@ -60,14 +60,6 @@ public final class TestPatternMatcher
     public TestPatternMatcher(
         String pattern, String subjectToken, boolean supportWildcards, CapitalizationScheme subjectCapitalizationScheme
     )
-    {
-        this(pattern, subjectToken, supportWildcards, subjectCapitalizationScheme, false);
-    }
-
-    public TestPatternMatcher(
-        String pattern, String subjectToken, boolean supportWildcards, CapitalizationScheme subjectCapitalizationScheme,
-        boolean validate
-    )
         throws TestPatternException
     {
         this.pattern = pattern;
@@ -86,59 +78,24 @@ public final class TestPatternMatcher
                     + "(?<tokenValue>.+?)"
                     + "(?<suffix>" + this.suffixPatternRegex + ")$"
             );
-
-        if (validate)
-        {
-            validatePattern();
-        }
     }
 
-    public String getSubjectToken()
-    {
-        return subjectToken;
-    }
-
-    public String getPrefixPattern()
-    {
-        return prefixPattern;
-    }
-
-    public String getPrefixPatternRegex()
-    {
-        return prefixPatternRegex;
-    }
-
-    public String getSuffixPattern()
-    {
-        return suffixPattern;
-    }
-
-    public String getSuffixPatternRegex()
-    {
-        return suffixPatternRegex;
-    }
-
-    public List<String> getPatternInvalidChar(String pattern)
+    private static List<String> getPatternInvalidChar(String pattern)
     {
         return VALID_CHARS.matcher(pattern).results().map(MatchResult::group).collect(Collectors.toList());
     }
 
-    public boolean patternContainsWildcard(String pattern)
+    private static boolean patternContainsWildcard(String pattern)
     {
         return (pattern.indexOf('*') >= 0) || (pattern.indexOf('+') >= 0);
     }
 
-    public boolean patternContainsTokenName()
+    private boolean patternContainsTokenName()
     {
         return pattern.contains(subjectToken);
     }
 
-    public CapitalizationScheme getSubjectCapitalizationScheme()
-    {
-        return subjectCapitalizationScheme;
-    }
-
-    public static String generateRegexFromPattern(String pattern)
+    private static String generateRegexFromPattern(String pattern)
     {
         return
             StringUtils.replaceEach(
@@ -196,6 +153,27 @@ public final class TestPatternMatcher
         }
 
         return tokenValueRegex.matcher(source).matches();
+    }
+
+    public String findSubjectName(String testName)
+    {
+        if (patternContainsWildcard(prefixPattern) || patternContainsWildcard(suffixPattern))
+        {
+            return null;
+        }
+
+        Matcher matcher = tokenValueRegex.matcher(testName);
+
+        if (!matcher.matches())
+        {
+            return null;
+        }
+
+        String subjectName = matcher.group("tokenValue");
+
+        return subjectIsCapitalized(matcher.group("prefix"))
+            ? uncapitalize(subjectName)
+            : subjectName;
     }
 
     public TestPatternMatchResult findTestMatch(String test, String subjectCandidate)

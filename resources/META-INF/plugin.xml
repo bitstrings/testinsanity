@@ -1,7 +1,6 @@
 <idea-plugin require-restart="true">
     <id>org.bitstrings.idea.plugins.TestInsanity</id>
     <name>TestInsanity</name>
-    <version>2.0.0</version>
     <vendor email="pino.silvaggio@gmail.com" url="https://github.com/bitstrings/testinsanity">bitstrings.org</vendor>
 
     <description><![CDATA[
@@ -16,30 +15,34 @@
       <code>&nbsp;&nbsp;(test|)${subjectName}*</code> &nbsp; maps <code>isDarkColor()</code> to
       <code>testIsDarkColor_whenBlack()</code><br/>
       <br/>
-      Several patterns can be active at once, separated by <code>;</code>, so <code>${className}Test</code>,
-      <code>${className}IT</code> and <code>${className}Spec</code> coexist in one project.<br/>
+      A scheme binds one test class convention to the test method conventions used inside it, and several
+      schemes are tried in order, so unit tests under <code>${className}Test</code>, integration tests under
+      <code>${className}IT</code> and specs under <code>${className}Spec</code> coexist in one project, each
+      with its own method naming.<br/>
       <br/>
       <b>What it does</b>
       <ul>
         <li><b>Renaming, both ways</b> &mdash; subject class to test classes, test class to subject,
             subject method to test methods, test method to subject. Proposed renames appear in the
             standard Rename related items dialog, so you can deselect any of them.</li>
-        <li><b>Navigation</b> &mdash; Go To -&gt; Jump to Sibling (CTRL+ALT+`) moves between a method
-            and its test method, not only between their classes. Navigate -&gt; Test (CTRL+SHIFT+T)
-            and Create Test follow the same scheme.</li>
+        <li><b>Navigation</b> &mdash; Go To -&gt; Jump to Sibling (CTRL+ALT+` by default) moves between a
+            method and its test method, not only between their classes. Navigate -&gt; Test (CTRL+SHIFT+T by
+            default) follows the same scheme.</li>
         <li><b>Gutter icons</b> &mdash; the sibling class or method, its JUnit 5 DisplayName when it
             has one, and a distinct icon for a test with no subject.</li>
-        <li><b>Create what is missing</b> &mdash; Alt+Enter on a subject creates the test class in the
-            module test source root, or the test method carrying the right framework annotation
-            (Java sources).</li>
+        <li><b>Create what is missing</b> &mdash; Alt+Enter on a subject creates the test class, or the test
+            method carrying the right framework annotation, one entry per scheme still missing its class. On a
+            test, the same key creates the subject class it has no counterpart for (Java sources).</li>
         <li><b>Configuration in version control</b> &mdash; a <code>.testinsanity.json</code> at the project
             root pins the scheme for everyone, the way .editorconfig does, so nothing needs to live in
             <code>.idea</code>. Whatever the file leaves out stays a personal preference, and the file itself
-            gets completion, documentation and validation as you type.</li>
+            gets completion, documentation and validation as you type. One click in the settings creates it
+            from the settings you already have.</li>
       </ul>
       <b>Built for real projects</b>
       <ul>
-        <li>JUnit 4, JUnit 5 &mdash; including nested and parameterized tests &mdash; and TestNG</li>
+        <li>JUnit 4, JUnit 5 &mdash; including nested, parameterized and templated tests &mdash; and TestNG,
+            plus any annotation composed of theirs and any you declare yourself</li>
         <li>Java and Kotlin; Kotlin support is optional, and the plugin works without it</li>
         <li>Kotlin backtick test names, since patterns accept spaces</li>
         <li>Tests in a module of their own, resolved in both directions</li>
@@ -64,16 +67,32 @@
             scheme lives in version control instead of in <code>.idea</code>. Keys the file declares win
             over the IDE settings and appear disabled in the settings dialog; keys it omits stay personal.
             The file is re-read whenever it changes, including on branch switches, and a bundled JSON schema
-            gives it completion, inline documentation and validation.</li>
+            gives it completion, inline documentation and validation. Settings -&gt; Tools -&gt; TestInsanity
+            shows whether the file is in use, can switch it off per IDE, and can create it from the settings
+            you already have.</li>
         <li>Renaming works in all four directions: subject class to test classes, test class to subject class,
             subject method to test methods, and test method to subject method.</li>
         <li>Renaming goes through the standard Rename related items dialog, so it also applies to in-place
             rename and lets you deselect any proposed rename.</li>
-        <li>Several alternative patterns per project, separated by ; and tried in order, so Test, Tests, IT and
-            Spec can coexist.</li>
-        <li>Navigate -> Test (CTRL+SHIFT+T) and Create Test follow the configured naming scheme.</li>
-        <li>New intention (Alt+Enter): create the missing test class or test method for the subject.</li>
+        <li>Several named schemes per project, listed and reordered in the settings and tried top to bottom.
+            Each scheme binds one test class pattern to its own test method patterns, so unit, integration and
+            end to end tests keep separate naming instead of sharing one flat list. The first scheme whose test
+            class pattern matches wins, and an existing single-pattern setup migrates into one scheme with no
+            change in behaviour.</li>
+        <li>Navigate -> Test follows the configured naming scheme, and the Create Test Sibling intention creates
+            the class and method your scheme names.</li>
+        <li>New intention (Alt+Enter): create the missing test class or test method for the subject. One entry per
+            scheme that is still missing its test class, so a unit scheme and an integration scheme can each be
+            created; a chooser appears when more than one is missing.</li>
+        <li>The reverse intention (Alt+Enter): create the missing subject class from a test class, and the missing
+            subject method when the scheme names it unambiguously.</li>
+        <li>Created classes land in the module test root, or in the module declared as its test module, or in the
+            single dependent module that has test roots, so a separate test module is handled.</li>
         <li>JUnit 5 nested test classes are matched.</li>
+        <li>The test annotation check follows composed annotations, so a project-local @IntegrationTest that
+            is itself annotated @Test is recognized, as is an override of an annotated method. Every JUnit
+            Platform engine is covered through @Testable, and additionalTestAnnotations declares a house
+            runner by name or by package wildcard.</li>
         <li>Patterns accept spaces, for Kotlin backtick test names, with a matching preset.</li>
         <li>Optional @DisplayName generation and rename synchronization.</li>
         <li>Gutter icons are computed off the highlighting pass and cached, appear in every JVM language, and
@@ -89,11 +108,18 @@
         <li>A nested helper class inside a test class was reported as a test of the outer subject.</li>
         <li>The settings Apply button ignored changes to the renaming checkbox.</li>
         <li>A damaged TestInsanity.xml could leave the plugin inert.</li>
+        <li>Creating .testinsanity.json from the settings wrote an empty array the plugin then refused to read.</li>
+        <li>A settings file that named test frameworks explicitly did not pick up annotations added by an
+            upgrade.</li>
+        <li>Gutter icons kept the previous scheme in already-open editors until the file was edited again.</li>
+        <li>The method gutter tooltip read TestMethod and SubjectMethod with no space.</li>
+        <li>Only the first scheme could create its test class; once any scheme had one, the others could not.</li>
       </ul>
       <b>Changed</b><br/>
       <ul>
-        <li>Show renaming dialog is now Pre-select test renames: the dialog is the platform Rename related
-            items dialog, and this setting decides whether the proposed renames start checked.</li>
+        <li>Show renaming dialog is now Pre-select test renames: it decides whether the proposed renames
+            start checked rather than whether a dialog appears, and the dialog is the platform Rename
+            related items dialog. Settings written by earlier versions carry over with renaming left on.</li>
       </ul>
       <br/>
       <b>v1.3.0</b><br/>
@@ -154,8 +180,6 @@
       First public release.
     ]]>
     </change-notes>
-
-    <idea-version since-build="243"/>
 
     <depends>com.intellij.modules.java</depends>
     <depends optional="true" config-file="testinsanity-withKotlin.xml">org.jetbrains.kotlin</depends>
@@ -219,6 +243,11 @@
         <intentionAction>
             <language>JAVA</language>
             <className>org.bitstrings.idea.plugins.testinsanity.intentions.CreateTestSiblingIntention</className>
+            <category>TestInsanity</category>
+        </intentionAction>
+        <intentionAction>
+            <language>JAVA</language>
+            <className>org.bitstrings.idea.plugins.testinsanity.intentions.CreateSubjectSiblingIntention</className>
             <category>TestInsanity</category>
         </intentionAction>
     </extensions>

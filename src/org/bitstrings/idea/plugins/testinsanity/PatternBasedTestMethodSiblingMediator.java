@@ -1,6 +1,6 @@
 package org.bitstrings.idea.plugins.testinsanity;
 
-import static com.intellij.codeInsight.AnnotationUtil.checkAnnotatedUsingPatterns;
+import static com.intellij.codeInsight.MetaAnnotationUtil.isMetaAnnotatedInHierarchy;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptySet;
@@ -12,11 +12,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.bitstrings.idea.plugins.testinsanity.util.TestAnnotationPattern;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternException;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatchResult;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher;
 import org.bitstrings.idea.plugins.testinsanity.util.TestPatternMatcher.CapitalizationScheme;
 
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 
@@ -30,6 +32,10 @@ public class PatternBasedTestMethodSiblingMediator
     private final String testMethodNamePattern;
 
     private final Set<String> testMethodAnnotations;
+
+    private final Set<String> annotationNames;
+
+    private final List<String> annotationPackages;
 
     private final TestPatternMatcher testMethodPatternMatcher;
 
@@ -60,26 +66,67 @@ public class PatternBasedTestMethodSiblingMediator
                 capitalizeSubjectNameScheme
             );
         this.testMethodAnnotations = testMethodAnnotations;
+
+        Set<String> names = new LinkedHashSet<>();
+        List<String> packages = new ArrayList<>();
+
+        for (String annotation : testMethodAnnotations)
+        {
+            if (annotation.endsWith(TestAnnotationPattern.PACKAGE_WILDCARD_SUFFIX))
+            {
+                packages.add(annotation.substring(0, annotation.length() - 1));
+            }
+            else
+            {
+                names.add(annotation);
+            }
+        }
+
+        this.annotationNames = Set.copyOf(names);
+        this.annotationPackages = List.copyOf(packages);
+
         this.includeInheritedMethods = includeInheritedMethods;
         this.includeNestedClasses = includeNestedClasses;
-    }
-
-    public String getTestMethodNamePattern()
-    {
-        return testMethodNamePattern;
-    }
-
-    public Set<String> getTestMethodAnnotations()
-    {
-        return testMethodAnnotations;
     }
 
     @Override
     public boolean checkMethodAnnotation(PsiMethod targetMethod, boolean failOnEmpty)
     {
-        return
-            ((testMethodAnnotations.isEmpty() && !failOnEmpty)
-                || checkAnnotatedUsingPatterns(targetMethod, testMethodAnnotations));
+        if (testMethodAnnotations.isEmpty())
+        {
+            return !failOnEmpty;
+        }
+
+        return isAnnotatedFromPackage(targetMethod)
+            || (!annotationNames.isEmpty() && isMetaAnnotatedInHierarchy(targetMethod, annotationNames));
+    }
+
+    private boolean isAnnotatedFromPackage(PsiMethod targetMethod)
+    {
+        if (annotationPackages.isEmpty())
+        {
+            return false;
+        }
+
+        for (PsiAnnotation annotation : targetMethod.getModifierList().getAnnotations())
+        {
+            String qualifiedName = annotation.getQualifiedName();
+
+            if (qualifiedName == null)
+            {
+                continue;
+            }
+
+            for (String annotationPackage : annotationPackages)
+            {
+                if (qualifiedName.startsWith(annotationPackage))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     @Override
@@ -162,6 +209,12 @@ public class PatternBasedTestMethodSiblingMediator
     public String generateTestName(String subjectName)
     {
         return testMethodPatternMatcher.generateTestName(subjectName);
+    }
+
+    @Override
+    public String findSubjectName(String testName)
+    {
+        return testMethodPatternMatcher.findSubjectName(testName);
     }
 
     @Override

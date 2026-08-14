@@ -13,10 +13,10 @@ public final class TestInsanityConfiguration
 {
     public enum Key
     {
-        TEST_CLASS_PATTERNS,
-        TEST_METHOD_PATTERNS,
+        SCHEMES,
         CAPITALIZE_SUBJECT,
         TEST_ANNOTATIONS,
+        ADDITIONAL_TEST_ANNOTATIONS,
         INCLUDE_INHERITED_METHODS,
         INCLUDE_INTERFACES_AND_ABSTRACTS,
         INCLUDE_NESTED_CLASSES,
@@ -44,18 +44,25 @@ public final class TestInsanityConfiguration
 
     public boolean isGovernedByProjectConfig(Key key)
     {
+        return settings.isUseProjectConfig() && isDeclaredInProjectConfig(key);
+    }
+
+    public boolean isDeclaredInProjectConfig(Key key)
+    {
         ProjectConfig config = configService.getConfig();
 
         switch (key)
         {
-            case TEST_CLASS_PATTERNS:
-                return (config.getTestClassPatterns() != null);
-            case TEST_METHOD_PATTERNS:
-                return (config.getTestMethodPatterns() != null);
+            case SCHEMES:
+                return (config.getSchemes() != null)
+                    || (config.getTestClassPatterns() != null)
+                    || (config.getTestMethodPatterns() != null);
             case CAPITALIZE_SUBJECT:
                 return (config.getCapitalizeSubject() != null);
             case TEST_ANNOTATIONS:
                 return (config.getTestAnnotations() != null);
+            case ADDITIONAL_TEST_ANNOTATIONS:
+                return (config.getAdditionalTestAnnotations() != null);
             case INCLUDE_INHERITED_METHODS:
                 return (config.getIncludeInheritedMethods() != null);
             case INCLUDE_INTERFACES_AND_ABSTRACTS:
@@ -77,35 +84,82 @@ public final class TestInsanityConfiguration
         }
     }
 
-    public boolean hasProjectConfig()
+    public ProjectConfig getProjectConfig()
+    {
+        return configService.getConfig();
+    }
+
+    public ProjectConfigService getProjectConfigService()
+    {
+        return configService;
+    }
+
+    public boolean isProjectConfigPresent()
     {
         return (configService.findConfigFile() != null);
     }
 
-    public List<String> getTestClassPatterns()
+    private ProjectConfig config()
     {
-        List<String> patterns = configService.getConfig().getTestClassPatterns();
+        return settings.isUseProjectConfig() ? configService.getConfig() : ProjectConfig.absent();
+    }
+
+    public List<TestSchemeSpec> getSchemes()
+    {
+        ProjectConfig config = config();
+
+        if (config.getSchemes() != null)
+        {
+            return config.getSchemes();
+        }
+
+        return ((config.getTestClassPatterns() == null) && (config.getTestMethodPatterns() == null))
+            ? settings.resolveSchemes()
+            : TestSchemeSpec.migrate(getTestClassPatterns(), getTestMethodPatterns());
+    }
+
+    private List<String> getTestClassPatterns()
+    {
+        List<String> patterns = config().getTestClassPatterns();
 
         return (patterns == null) ? settings.resolveTestClassPatterns() : patterns;
     }
 
-    public List<String> getTestMethodPatterns()
+    private List<String> getTestMethodPatterns()
     {
-        List<String> patterns = configService.getConfig().getTestMethodPatterns();
+        List<String> patterns = config().getTestMethodPatterns();
 
         return (patterns == null) ? settings.resolveTestMethodNamePatterns() : patterns;
     }
 
     public CapitalizationScheme getCapitalizationScheme()
     {
-        CapitalizationScheme scheme = configService.getConfig().getCapitalizeSubject();
+        CapitalizationScheme scheme = config().getCapitalizeSubject();
 
         return (scheme == null) ? settings.getTestMethodNameCapitalizationScheme() : scheme;
     }
 
     public Set<String> getTestAnnotationFqns()
     {
-        Set<TestAnnotation> testAnnotations = configService.getConfig().getTestAnnotations();
+        Set<String> annotationFqns = new HashSet<>(frameworkAnnotationFqns());
+
+        annotationFqns.addAll(getAdditionalTestAnnotations());
+
+        return annotationFqns;
+    }
+
+    public List<String> getAdditionalTestAnnotations()
+    {
+        List<String> annotationPatterns = config().getAdditionalTestAnnotations();
+
+        return (annotationPatterns == null)
+            ? settings.resolveAdditionalTestAnnotations()
+            : annotationPatterns;
+    }
+
+    private Set<String> frameworkAnnotationFqns()
+    {
+        Set<TestAnnotation> testAnnotations = config().getTestAnnotations();
 
         if (testAnnotations == null)
         {
@@ -124,7 +178,7 @@ public final class TestInsanityConfiguration
 
     public boolean isTestAnnotationEnabled(TestAnnotation testAnnotation)
     {
-        Set<TestAnnotation> testAnnotations = configService.getConfig().getTestAnnotations();
+        Set<TestAnnotation> testAnnotations = config().getTestAnnotations();
 
         return (testAnnotations == null)
             ? settings.hasTestAnnotation(testAnnotation)
@@ -133,43 +187,43 @@ public final class TestInsanityConfiguration
 
     public boolean isIncludeInheritedMethods()
     {
-        return resolve(configService.getConfig().getIncludeInheritedMethods(), settings.isIncludeInheritedMethods());
+        return resolve(config().getIncludeInheritedMethods(), settings.isIncludeInheritedMethods());
     }
 
     public boolean isIncludeInterfacesAbstracts()
     {
         return resolve(
-            configService.getConfig().getIncludeInterfacesAndAbstracts(), settings.isIncludeInterfacesAbstracts());
+            config().getIncludeInterfacesAndAbstracts(), settings.isIncludeInterfacesAbstracts());
     }
 
     public boolean isIncludeNestedClasses()
     {
-        return resolve(configService.getConfig().getIncludeNestedClasses(), settings.isIncludeNestedClasses());
+        return resolve(config().getIncludeNestedClasses(), settings.isIncludeNestedClasses());
     }
 
     public boolean isSyncDisplayName()
     {
-        return resolve(configService.getConfig().getSyncDisplayName(), settings.isSyncDisplayName());
+        return resolve(config().getSyncDisplayName(), settings.isSyncDisplayName());
     }
 
     public boolean isRefactoringEnabled()
     {
-        return resolve(configService.getConfig().getRefactoring(), settings.isRefactoringEnabled());
+        return resolve(config().getRefactoring(), settings.isRefactoringEnabled());
     }
 
     public boolean isNavigationEnabled()
     {
-        return resolve(configService.getConfig().getNavigation(), settings.isNavigationEnabled());
+        return resolve(config().getNavigation(), settings.isNavigationEnabled());
     }
 
     public boolean isGutterIconsEnabled()
     {
-        return resolve(configService.getConfig().getGutterIcons(), settings.isGutterAnnotationEnabled());
+        return resolve(config().getGutterIcons(), settings.isGutterAnnotationEnabled());
     }
 
     public boolean isPreselectRenames()
     {
-        return resolve(configService.getConfig().getPreselectRenames(), settings.isRenamingDialogEnabled());
+        return resolve(config().getPreselectRenames(), settings.isPreselectRenames());
     }
 
     private static boolean resolve(Boolean projectValue, boolean userValue)

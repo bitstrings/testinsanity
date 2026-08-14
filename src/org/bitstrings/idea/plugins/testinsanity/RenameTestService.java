@@ -1,5 +1,7 @@
 package org.bitstrings.idea.plugins.testinsanity;
 
+import static java.util.Collections.singletonList;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -10,6 +12,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.bitstrings.idea.plugins.testinsanity.config.TestInsanityConfiguration;
 import org.bitstrings.idea.plugins.testinsanity.util.TestInsanityUtil;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -20,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
@@ -27,46 +32,23 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.serviceContainer.NonInjectable;
 
 public final class RenameTestService
 {
-    private static final class Mediators
-    {
-        private final TestClassSiblingMediator classMediator;
+    private volatile TestSchemes schemes;
 
-        private final TestMethodSiblingMediator methodMediator;
+    private final Project project;
 
-        Mediators(TestClassSiblingMediator classMediator, TestMethodSiblingMediator methodMediator)
-        {
-            this.classMediator = classMediator;
-            this.methodMediator = methodMediator;
-        }
-    }
-
-    private volatile Mediators mediators;
-
-    private final TestInsanityConfiguration configuration;
+    private final TestSchemesFactory schemesFactory;
 
     private final SimpleModificationTracker configurationTracker = new SimpleModificationTracker();
 
     public RenameTestService(Project project)
     {
-        this(project, null, null);
+        this.project = project;
+        this.schemesFactory = new TestSchemesFactory(TestInsanityConfiguration.getInstance(project));
 
-        update();
-    }
-
-    @NonInjectable
-    public RenameTestService(
-        Project project,
-        TestClassSiblingMediator testClassSiblingMediator,
-        TestMethodSiblingMediator testMethodSiblingMediator
-    )
-    {
-        this.mediators = new Mediators(testClassSiblingMediator, testMethodSiblingMediator);
-
-        this.configuration = TestInsanityConfiguration.getInstance(project);
+        reload();
     }
 
     public static RenameTestService getInstance(Project project)
@@ -74,14 +56,9 @@ public final class RenameTestService
         return project.getService(RenameTestService.class);
     }
 
-    public TestClassSiblingMediator getTestClassSiblingMediator()
+    public TestSchemes getTestSchemes()
     {
-        return mediators.classMediator;
-    }
-
-    public TestMethodSiblingMediator getTestMethodSiblingMediator()
-    {
-        return mediators.methodMediator;
+        return schemes;
     }
 
     public List<PsiClass> findTestClasses(PsiClass subjectClass)
@@ -89,7 +66,7 @@ public final class RenameTestService
         return CachedValuesManager.getCachedValue(
             subjectClass,
             () -> CachedValueProvider.Result.create(
-                mediators.classMediator.getTestClasses(subjectClass, getSearchScope(subjectClass)),
+                schemes.getTestClasses(subjectClass, getSearchScope(subjectClass)),
                 PsiModificationTracker.MODIFICATION_COUNT,
                 ProjectRootManager.getInstance(subjectClass.getProject()),
                 configurationTracker
@@ -102,7 +79,7 @@ public final class RenameTestService
         return CachedValuesManager.getCachedValue(
             testClass,
             () -> CachedValueProvider.Result.create(
-                mediators.classMediator.getSubjectClass(testClass, getSearchScope(testClass)),
+                schemes.getSubjectClass(testClass, getSearchScope(testClass)),
                 PsiModificationTracker.MODIFICATION_COUNT,
                 ProjectRootManager.getInstance(testClass.getProject()),
                 configurationTracker
@@ -119,7 +96,7 @@ public final class RenameTestService
             return null;
         }
 
-        PsiClass testClass = mediators.classMediator.resolveTestClass(containingClass);
+        PsiClass testClass = schemes.resolveTestClass(containingClass);
 
         return (testClass == null)
             ? findInheritedTestClass(containingClass)
@@ -153,12 +130,12 @@ public final class RenameTestService
             return renames;
         }
 
-        TestClassSiblingMediator classMediator = mediators.classMediator;
+        TestSchemes testSchemes = schemes;
 
         for (PsiClass testClass : findTestClasses(subjectClass))
         {
             String newTestClassName =
-                classMediator.renameTestName(testClass.getName(), subjectClass.getName(), newSubjectName);
+                testSchemes.renameTestClassName(testClass.getName(), subjectClass.getName(), newSubjectName);
 
             if (!Objects.equals(newTestClassName, testClass.getName()))
             {
@@ -186,7 +163,7 @@ public final class RenameTestService
         }
 
         String newSubjectName =
-            mediators.classMediator.renameSubjectName(subjectClass.getName(), testClass.getName(), newTestName);
+            schemes.renameSubjectClassNameXXX(subjectClass.getName(), testClass.getName(), newTestName);
 
         if (StringUtils.isEmpty(newSubjectName))
         {
@@ -216,16 +193,20 @@ public final class RenameTestService
             return renames;
         }
 
-        TestMethodSiblingMediator methodMediator = mediators.methodMediator;
+        TestSchemes testSchemes = schemes;
 
-        for (PsiMethod testMethod : methodMediator.getTestMethods(subjectMethod, findTestClasses(subjectClass)))
+        for (PsiClass testClass : findTestClasses(subjectClass))
         {
-            String newTestMethodName =
-                methodMediator.renameTestName(testMethod.getName(), subjectMethod.getName(), newSubjectName);
-
-            if (!Objects.equals(newTestMethodName, testMethod.getName()))
+            for (PsiMethod testMethod : testSchemes.getTestMethods(subjectMethod, singletonList(testClass)))
             {
-                renames.put(testMethod, newTestMethodName);
+                String newTestMethodName =
+                    testSchemes.renameTestMethodName(
+                        testClass, testMethod.getName(), subjectMethod.getName(), newSubjectName);
+
+                if (!Objects.equals(newTestMethodName, testMethod.getName()))
+                {
+                    renames.put(testMethod, newTestMethodName);
+                }
             }
         }
 
@@ -250,9 +231,9 @@ public final class RenameTestService
             return renames;
         }
 
-        TestMethodSiblingMediator methodMediator = mediators.methodMediator;
+        TestSchemes testSchemes = schemes;
 
-        List<PsiMethod> subjectMethods = methodMediator.getSubjectMethods(testMethod, subjectClass);
+        List<PsiMethod> subjectMethods = testSchemes.getSubjectMethods(testClass, testMethod, subjectClass);
 
         if (subjectMethods.isEmpty())
         {
@@ -260,7 +241,8 @@ public final class RenameTestService
         }
 
         String newSubjectName =
-            methodMediator.renameSubjectName(subjectMethods.get(0).getName(), testMethod.getName(), newTestName);
+            testSchemes.renameSubjectMethodName(
+                testClass, subjectMethods.get(0).getName(), testMethod.getName(), newTestName);
 
         if (StringUtils.isEmpty(newSubjectName))
         {
@@ -284,34 +266,35 @@ public final class RenameTestService
 
     public void update()
     {
-        List<TestClassSiblingMediator> classMediators = new ArrayList<>();
+        reload();
 
-        for (String testClassPattern : configuration.getTestClassPatterns())
-        {
-            classMediators.add(
-                new PatternBasedTestClassSiblingMediator(
-                    testClassPattern, configuration.isIncludeInterfacesAbstracts()));
-        }
+        restartHighlighting();
+    }
 
-        List<TestMethodSiblingMediator> methodMediators = new ArrayList<>();
-
-        for (String testMethodPattern : configuration.getTestMethodPatterns())
-        {
-            methodMediators.add(
-                new PatternBasedTestMethodSiblingMediator(
-                    testMethodPattern,
-                    configuration.getCapitalizationScheme(),
-                    configuration.getTestAnnotationFqns(),
-                    configuration.isIncludeInheritedMethods(),
-                    configuration.isIncludeNestedClasses()));
-        }
-
-        mediators =
-            new Mediators(
-                new CompositeTestClassSiblingMediator(classMediators),
-                new CompositeTestMethodSiblingMediator(methodMediators));
+    private void reload()
+    {
+        schemes = schemesFactory.createLenient();
 
         configurationTracker.incModificationCount();
+    }
+
+    @SuppressWarnings("deprecation")
+    private void restartHighlighting()
+    {
+        // restart(Object) replaces this overload but only exists from 262.9; verifyPlugin fails on 243-262 with it.
+        DaemonCodeAnalyzer daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
+
+        PsiManager psiManager = PsiManager.getInstance(project);
+
+        for (VirtualFile openFile : FileEditorManager.getInstance(project).getOpenFiles())
+        {
+            PsiFile openPsiFile = psiManager.findFile(openFile);
+
+            if (openPsiFile != null)
+            {
+                daemonCodeAnalyzer.restart(openPsiFile);
+            }
+        }
     }
 
     public GlobalSearchScope getSearchScope(PsiElement element)
@@ -351,11 +334,11 @@ public final class RenameTestService
 
         candidates.sort(TestInsanityUtil.STABLE_CLASS_ORDER);
 
-        TestClassSiblingMediator classMediator = mediators.classMediator;
+        TestSchemes testSchemes = schemes;
 
         for (PsiClass candidate : candidates)
         {
-            if (classMediator.isTestClass(candidate))
+            if (testSchemes.isTestClass(candidate))
             {
                 return candidate;
             }

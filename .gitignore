@@ -1,3 +1,7 @@
-.idea
-out
+.idea/
+.gradle/
+.intellijPlatform/
+build/
+out/
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
